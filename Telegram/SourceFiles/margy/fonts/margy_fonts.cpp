@@ -1,5 +1,6 @@
 #include "margy/fonts/margy_fonts.h"
 #include "margy/margy_config.h"
+#include "boxes/abstract_box.h"
 #include "chat_helpers/emoji_sets_manager.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/labels.h"

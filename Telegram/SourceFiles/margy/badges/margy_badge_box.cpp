@@ -1,6 +1,7 @@
 #include "margy/badges/margy_badge_box.h"
 #include "margy/badges/margy_plane_3d.h"
 #include "margy/badges/margy_badge_manager.h"
+#include "boxes/abstract_box.h"
 #include "ui/layers/generic_box.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/labels.h"

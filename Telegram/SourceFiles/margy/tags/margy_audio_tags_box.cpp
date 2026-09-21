@@ -1,5 +1,6 @@
 #include "margy/tags/margy_audio_tags_box.h"
 #include "margy/tags/margy_audio_tags.h"
+#include "boxes/abstract_box.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/labels.h"
 #include "ui/widgets/buttons.h"

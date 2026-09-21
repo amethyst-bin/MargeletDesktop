@@ -1,4 +1,5 @@
 #include "margy/cats/margy_cats_box.h"
+#include "boxes/abstract_box.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/labels.h"
 #include "ui/widgets/buttons.h"

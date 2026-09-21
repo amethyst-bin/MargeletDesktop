@@ -2,6 +2,7 @@
 #include "margy/badges/margy_badge_manager.h"
 #include "margy/badges/margy_badge_box.h"
 #include "margy/badges/margy_badge_icon.h"
+#include "boxes/abstract_box.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/labels.h"
 #include "ui/widgets/buttons.h"
