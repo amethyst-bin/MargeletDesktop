@@ -1,9 +1,9 @@
 #pragma once
 
+#include "ui/layers/box_content.h"
 #include <QString>
 #include <QColor>
 #include <QRect>
-#include <QDialog>
 
 class QPainter;
 
@@ -20,22 +20,20 @@ struct Colors {
 [[nodiscard]] Colors ForPeer(int64_t peerId);
 void Paint(QPainter &p, const QRect &rect, const Colors &colors);
 
-class GradientBox final : public QDialog {
-	Q_OBJECT
-
+class GradientBox final : public ::Ui::BoxContent {
 public:
-	explicit GradientBox(QWidget *parent);
+	explicit GradientBox(QWidget *parent = nullptr);
 	~GradientBox() override = default;
 
-	static void Show(QWidget *parent);
+	static void Show(QWidget *parent = nullptr);
+
+protected:
+	void prepare() override;
 
 private:
-	void setupUi();
-	void updatePreview();
-
 	QColor _first = QColor(0x8D, 0xD1, 0xB0);
 	QColor _second = QColor(0xB7, 0xA8, 0xE0);
-	QWidget *_preview = nullptr;
+	bool _enabled = true;
 };
 
 } // namespace Margy::Gradient

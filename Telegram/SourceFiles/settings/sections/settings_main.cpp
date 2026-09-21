@@ -370,7 +370,7 @@ void BuildSectionButtons(SectionBuilder &builder) {
 		builder.addSectionButton({
 			.title = tr::lng_settings_my_account(),
 			.targetSection = InformationId(),
-			.icon = { &st::menuIconProfile },
+			.icon = { &st::menuIconProfile, IconType::Rounded, nullptr, QBrush(QColor(0x2F, 0x8C, 0xC8)) },
 			.keywords = { u"profile"_q, u"edit"_q, u"information"_q },
 		});
 	}
@@ -378,21 +378,21 @@ void BuildSectionButtons(SectionBuilder &builder) {
 	builder.addSectionButton({
 		.title = tr::lng_settings_section_notify(),
 		.targetSection = NotificationsId(),
-		.icon = { &st::menuIconNotifications },
+		.icon = { &st::menuIconNotifications, IconType::Rounded, nullptr, QBrush(QColor(0xF2, 0x4E, 0x4E)) },
 		.keywords = { u"alerts"_q, u"sounds"_q, u"badge"_q },
 	});
 
 	builder.addSectionButton({
 		.title = tr::lng_settings_section_privacy(),
 		.targetSection = PrivacySecurityId(),
-		.icon = { &st::menuIconLock },
+		.icon = { &st::menuIconLock, IconType::Rounded, nullptr, QBrush(QColor(0x78, 0x90, 0x9C)) },
 		.keywords = { u"security"_q, u"passcode"_q, u"password"_q, u"2fa"_q },
 	});
 
 	builder.addSectionButton({
 		.title = tr::lng_settings_section_chat_settings(),
 		.targetSection = ChatId(),
-		.icon = { &st::menuIconChatBubble },
+		.icon = { &st::menuIconChatBubble, IconType::Rounded, nullptr, QBrush(QColor(0x3D, 0xA5, 0xF5)) },
 		.keywords = { u"themes"_q, u"appearance"_q, u"stickers"_q },
 	});
 
@@ -423,7 +423,7 @@ void BuildSectionButtons(SectionBuilder &builder) {
 
 		builder.addButton({
 			.title = tr::lng_settings_section_filters(),
-			.icon = { &st::menuIconShowInFolder },
+			.icon = { &st::menuIconShowInFolder, IconType::Rounded, nullptr, QBrush(QColor(0xFB, 0x8C, 0x00)) },
 			.onClick = [=] { showOther(FoldersId()); },
 			.keywords = { u"filters"_q, u"tabs"_q },
 			.shown = std::move(shownProducer),
@@ -433,28 +433,28 @@ void BuildSectionButtons(SectionBuilder &builder) {
 	builder.addSectionButton({
 		.title = tr::lng_settings_advanced(),
 		.targetSection = AdvancedId(),
-		.icon = { &st::menuIconManage },
+		.icon = { &st::menuIconManage, IconType::Rounded, nullptr, QBrush(QColor(0xF5, 0x7C, 0x00)) },
 		.keywords = { u"performance"_q, u"proxy"_q, u"experimental"_q },
 	});
 
 	builder.addSectionButton({
 		.title = rpl::single(u"Настройки Margy"_q),
 		.targetSection = ::Margy::Settings::MargySettingsId(),
-		.icon = { &st::menuIconManage },
+		.icon = { &st::menuIconManage, IconType::Rounded, nullptr, QBrush(QColor(0x8D, 0xD1, 0xB0)) },
 		.keywords = { u"margy"_q, u"margelet"_q, u"badges"_q, u"cats"_q },
 	});
 
 	builder.addSectionButton({
 		.title = tr::lng_settings_section_devices(),
 		.targetSection = CallsId(),
-		.icon = { &st::menuIconUnmute },
+		.icon = { &st::menuIconUnmute, IconType::Rounded, nullptr, QBrush(QColor(0x26, 0xA6, 0x9A)) },
 		.keywords = { u"sessions"_q, u"calls"_q },
 	});
 
 	builder.addButton({
 		.id = u"main/power"_q,
 		.title = tr::lng_settings_power_menu(),
-		.icon = { &st::menuIconPowerUsage },
+		.icon = { &st::menuIconPowerUsage, IconType::Rounded, nullptr, QBrush(QColor(0xF8, 0x97, 0x1D)) },
 		.onClick = [=] {
 			controller->show(Box(PowerSavingBox, PowerSaving::Flags()));
 		},
@@ -464,7 +464,7 @@ void BuildSectionButtons(SectionBuilder &builder) {
 	builder.addButton({
 		.id = u"main/language"_q,
 		.title = tr::lng_settings_language(),
-		.icon = { &st::menuIconTranslate },
+		.icon = { &st::menuIconTranslate, IconType::Rounded, nullptr, QBrush(QColor(0xAB, 0x47, 0xBC)) },
 		.label = rpl::single(
 			Lang::GetInstance().id()
 		) | rpl::then(

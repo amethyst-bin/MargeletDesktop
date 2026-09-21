@@ -1,15 +1,20 @@
 #include "margy/gradient/margy_gradient.h"
 #include "margy/margy_config.h"
+#include "ui/wrap/vertical_layout.h"
+#include "ui/widgets/labels.h"
+#include "ui/widgets/buttons.h"
+#include "ui/widgets/checkbox.h"
+#include "ui/ui_utility.h"
+#include "ui/painter.h"
+#include "lang/lang_keys.h"
+#include "styles/style_layers.h"
+#include "styles/style_boxes.h"
+#include "styles/style_settings.h"
 
 #include <QPainter>
 #include <QLinearGradient>
 #include <QRegularExpression>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QPushButton>
 #include <QColorDialog>
-#include <QCheckBox>
 
 namespace Margy::Gradient {
 namespace {
@@ -59,126 +64,92 @@ void Paint(QPainter &p, const QRect &rect, const Colors &colors) {
 	p.fillRect(rect, grad);
 }
 
-GradientBox::GradientBox(QWidget *parent)
-: QDialog(parent) {
+GradientBox::GradientBox(QWidget *parent) {
 	const auto cur = Parse(Config::Instance().profileGradient());
 	if (cur.valid) {
 		_first = cur.first;
 		_second = cur.second;
 	}
-	setupUi();
+	_enabled = Config::Instance().profileGradientEnabled();
 }
 
 void GradientBox::Show(QWidget *parent) {
-	auto box = new GradientBox(parent);
-	box->setAttribute(Qt::WA_DeleteOnClose);
-	box->open();
+	::Ui::show(::Box<GradientBox>());
 }
 
-void GradientBox::setupUi() {
-	setWindowTitle(u"Градиент профиля Margy"_q);
-	setFixedSize(380, 420);
+void GradientBox::prepare() {
+	setTitle(rpl::single(u"Градиент профиля Margy"_q));
+	setDimensions(st::boxWideWidth, 420);
 
-	const auto layout = new QVBoxLayout(this);
-	layout->setContentsMargins(16, 16, 16, 16);
-	layout->setSpacing(12);
+	const auto content = setInnerWidget(
+		object_ptr<::Ui::VerticalLayout>(this));
 
-	const auto enableCheck = new QCheckBox(
-		u"Включить кастомный градиент профиля"_q,
-		this);
-	enableCheck->setChecked(Config::Instance().profileGradientEnabled());
-	layout->addWidget(enableCheck);
+	const auto enableCheck = content->add(
+		object_ptr<::Ui::Checkbox>(
+			content,
+			u"Включить кастомный градиент профиля"_q,
+			_enabled,
+			st::settingsCheckbox),
+		st::boxRowPadding);
+	enableCheck->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		_enabled = checked;
+	}, content->lifetime());
 
-	const auto previewLabel = new QLabel(u"Предпросмотр градиента:"_q, this);
-	layout->addWidget(previewLabel);
+	// Preview widget
+	const auto preview = content->add(
+		object_ptr<::Ui::FixedHeightWidget>(content, 120),
+		st::boxRowPadding);
+	preview->paintRequest(
+	) | rpl::on_next([=](const QRect &clip) {
+		Painter p(preview);
+		if (_enabled) {
+			auto grad = QLinearGradient(0, 0, preview->width(), preview->height());
+			grad.setColorAt(0.0, _first);
+			grad.setColorAt(1.0, _second);
+			p.fillRect(preview->rect(), grad);
+		} else {
+			p.fillRect(preview->rect(), QColor(0x24, 0x24, 0x28));
+		}
+	}, preview->lifetime());
 
-	_preview = new QWidget(this);
-	_preview->setFixedHeight(120);
-	_preview->setStyleSheet(u"border-radius: 12px;"_q);
-	layout->addWidget(_preview);
-
-	const auto colorsLayout = new QHBoxLayout();
-	const auto color1Btn = new QPushButton(u"Цвет 1"_q, this);
-	connect(color1Btn, &QPushButton::clicked, this, [=] {
-		const auto color = QColorDialog::getColor(_first, this, u"Выбор первого цвета"_q);
-		if (color.isValid()) {
-			_first = color;
-			updatePreview();
+	const auto c1Btn = content->add(
+		object_ptr<::Ui::SettingsButton>(
+			content,
+			rpl::single(u"Выбрать начальный цвет"_q),
+			st::settingsButton),
+		st::boxRowPadding);
+	c1Btn->setClickedCallback([=] {
+		const auto c = QColorDialog::getColor(_first, nullptr, u"Начальный цвет"_q);
+		if (c.isValid()) {
+			_first = c;
+			preview->update();
 		}
 	});
-	colorsLayout->addWidget(color1Btn);
 
-	const auto color2Btn = new QPushButton(u"Цвет 2"_q, this);
-	connect(color2Btn, &QPushButton::clicked, this, [=] {
-		const auto color = QColorDialog::getColor(_second, this, u"Выбор второго цвета"_q);
-		if (color.isValid()) {
-			_second = color;
-			updatePreview();
+	const auto c2Btn = content->add(
+		object_ptr<::Ui::SettingsButton>(
+			content,
+			rpl::single(u"Выбрать конечный цвет"_q),
+			st::settingsButton),
+		st::boxRowPadding);
+	c2Btn->setClickedCallback([=] {
+		const auto c = QColorDialog::getColor(_second, nullptr, u"Конечный цвет"_q);
+		if (c.isValid()) {
+			_second = c;
+			preview->update();
 		}
 	});
-	colorsLayout->addWidget(color2Btn);
-	layout->addLayout(colorsLayout);
 
-	const auto presetsLabel = new QLabel(u"Готовые пресеты:"_q, this);
-	layout->addWidget(presetsLabel);
-
-	const auto presetsLayout = new QHBoxLayout();
-	const auto preset1 = new QPushButton(u"Margy Mint"_q, this);
-	connect(preset1, &QPushButton::clicked, this, [=] {
-		_first = QColor(u"#8DD1B0"_q);
-		_second = QColor(u"#B7A8E0"_q);
-		updatePreview();
+	addButton(rpl::single(u"Сохранить"_q), [=] {
+		Config::Instance().setProfileGradientEnabled(_enabled);
+		Config::Instance().setProfileGradient(Format(_first, _second));
+		closeBox();
 	});
-	presetsLayout->addWidget(preset1);
 
-	const auto preset2 = new QPushButton(u"Sunset"_q, this);
-	connect(preset2, &QPushButton::clicked, this, [=] {
-		_first = QColor(u"#FF7E5F"_q);
-		_second = QColor(u"#FEB47B"_q);
-		updatePreview();
+	addButton(rpl::single(tr::lng_close(tr::now)), [=] {
+		closeBox();
 	});
-	presetsLayout->addWidget(preset2);
-
-	const auto preset3 = new QPushButton(u"Ocean"_q, this);
-	connect(preset3, &QPushButton::clicked, this, [=] {
-		_first = QColor(u"#2E3192"_q);
-		_second = QColor(u"#1BFFFF"_q);
-		updatePreview();
-	});
-	presetsLayout->addWidget(preset3);
-	layout->addLayout(presetsLayout);
-
-	updatePreview();
-
-	const auto buttonsLayout = new QHBoxLayout();
-	buttonsLayout->addStretch();
-
-	const auto cancelBtn = new QPushButton(u"Отмена"_q, this);
-	connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-	buttonsLayout->addWidget(cancelBtn);
-
-	const auto saveBtn = new QPushButton(u"Сохранить"_q, this);
-	saveBtn->setDefault(true);
-	connect(saveBtn, &QPushButton::clicked, this, [=] {
-		Config::Instance().setProfileGradientEnabled(enableCheck->isChecked());
-		Config::Instance().setProfileGradient(
-			_first.name().mid(1).toUpper() + '-' + _second.name().mid(1).toUpper());
-		accept();
-	});
-	buttonsLayout->addWidget(saveBtn);
-
-	layout->addLayout(buttonsLayout);
-}
-
-void GradientBox::updatePreview() {
-	if (!_preview) {
-		return;
-	}
-	const auto css = QString(
-		u"background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %1, stop:1 %2); border-radius: 12px;"_q)
-		.arg(_first.name())
-		.arg(_second.name());
-	_preview->setStyleSheet(css);
 }
 
 } // namespace Margy::Gradient

@@ -1,25 +1,23 @@
 #pragma once
 
+#include "ui/layers/box_content.h"
 #include <QString>
 #include <QStringList>
-#include <QDialog>
 
 namespace Margy::Fonts {
 
 void ApplyConfiguredFonts();
 [[nodiscard]] QStringList AvailableEmojiFontPacks();
 
-class FontsBox final : public QDialog {
-	Q_OBJECT
-
+class FontsBox final : public ::Ui::BoxContent {
 public:
-	explicit FontsBox(QWidget *parent);
+	explicit FontsBox(QWidget *parent = nullptr);
 	~FontsBox() override = default;
 
-	static void Show(QWidget *parent);
+	static void Show(QWidget *parent = nullptr);
 
-private:
-	void setupUi();
+protected:
+	void prepare() override;
 };
 
 } // namespace Margy::Fonts

@@ -1,14 +1,19 @@
 #include "margy/tags/margy_audio_tags_box.h"
+#include "margy/tags/margy_audio_tags.h"
+#include "ui/wrap/vertical_layout.h"
+#include "ui/widgets/labels.h"
+#include "ui/widgets/buttons.h"
+#include "ui/widgets/fields.h"
+#include "ui/ui_utility.h"
+#include "ui/toast/toast.h"
+#include "lang/lang_keys.h"
+#include "styles/style_layers.h"
+#include "styles/style_boxes.h"
+#include "styles/style_settings.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QFileDialog>
 #include <QFileInfo>
+#include <QFileDialog>
 #include <QFile>
-#include <QMessageBox>
 
 namespace Margy::Tags {
 
@@ -17,11 +22,9 @@ AudioTagsBox::AudioTagsBox(
 	const QString &filePath,
 	const QString &initialTitle,
 	const QString &initialArtist)
-: QDialog(parent)
-, _filePath(filePath)
+: _filePath(filePath)
 , _title(initialTitle)
 , _artist(initialArtist) {
-	setupUi();
 }
 
 void AudioTagsBox::Show(
@@ -29,45 +32,48 @@ void AudioTagsBox::Show(
 		const QString &filePath,
 		const QString &initialTitle,
 		const QString &initialArtist) {
-	auto box = new AudioTagsBox(parent, filePath, initialTitle, initialArtist);
-	box->setAttribute(Qt::WA_DeleteOnClose);
-	box->open();
+	::Ui::show(::Box<AudioTagsBox>(filePath, initialTitle, initialArtist));
 }
 
-void AudioTagsBox::setupUi() {
-	setWindowTitle(u"Редактор тегов аудио"_q);
-	setMinimumWidth(380);
+void AudioTagsBox::prepare() {
+	setTitle(rpl::single(u"Редактор аудио тегов"_q));
+	setDimensions(st::boxWideWidth, 380);
 
-	const auto layout = new QVBoxLayout(this);
-	layout->setContentsMargins(20, 20, 20, 20);
-	layout->setSpacing(12);
+	const auto content = setInnerWidget(
+		object_ptr<::Ui::VerticalLayout>(this));
 
-	const auto fileLabel = new QLabel(
-		u"Файл: "_q + QFileInfo(_filePath).fileName(),
-		this);
-	fileLabel->setStyleSheet(u"color: #888888; font-size: 12px;"_q);
-	layout->addWidget(fileLabel);
+	content->add(
+		object_ptr<::Ui::FlatLabel>(
+			content,
+			u"Файл: "_q + QFileInfo(_filePath).fileName(),
+			st::boxLabel),
+		st::boxRowPadding);
 
-	const auto titleLabel = new QLabel(u"Название трека:"_q, this);
-	layout->addWidget(titleLabel);
+	_titleInput = content->add(
+		object_ptr<::Ui::InputField>(
+			content,
+			st::defaultInputField,
+			rpl::single(u"Название трека"_q),
+			_title),
+		st::boxRowPadding);
 
-	const auto titleEdit = new QLineEdit(_title, this);
-	titleEdit->setPlaceholderText(u"Введите название песни"_q);
-	layout->addWidget(titleEdit);
+	_artistInput = content->add(
+		object_ptr<::Ui::InputField>(
+			content,
+			st::defaultInputField,
+			rpl::single(u"Исполнитель"_q),
+			_artist),
+		st::boxRowPadding);
 
-	const auto artistLabel = new QLabel(u"Исполнитель:"_q, this);
-	layout->addWidget(artistLabel);
-
-	const auto artistEdit = new QLineEdit(_artist, this);
-	artistEdit->setPlaceholderText(u"Введите имя артиста"_q);
-	layout->addWidget(artistEdit);
-
-	const auto coverBtn = new QPushButton(u"Выбрать обложку..."_q, this);
-	layout->addWidget(coverBtn);
-
-	connect(coverBtn, &QPushButton::clicked, this, [=] {
+	const auto coverBtn = content->add(
+		object_ptr<::Ui::SettingsButton>(
+			content,
+			rpl::single(u"Выбрать обложку..."_q),
+			st::settingsButton),
+		st::boxRowPadding);
+	coverBtn->setClickedCallback([=] {
 		const auto path = QFileDialog::getOpenFileName(
-			this,
+			nullptr,
 			u"Выбор обложки"_q,
 			QString(),
 			u"Изображения (*.jpg *.jpeg *.png)"_q);
@@ -75,48 +81,29 @@ void AudioTagsBox::setupUi() {
 			auto imgFile = QFile(path);
 			if (imgFile.open(QIODevice::ReadOnly)) {
 				_cover = imgFile.readAll();
-				coverBtn->setText(u"Обложка выбрана!"_q);
+				::Ui::Toast::Show(this, u"Обложка выбрана!"_q);
 			}
 		}
 	});
 
-	const auto buttonsLayout = new QHBoxLayout();
-	buttonsLayout->addStretch();
-
-	const auto cancelBtn = new QPushButton(u"Отмена"_q, this);
-	connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-	buttonsLayout->addWidget(cancelBtn);
-
-	const auto saveBtn = new QPushButton(u"Сохранить"_q, this);
-	saveBtn->setDefault(true);
-	connect(saveBtn, &QPushButton::clicked, this, [=] {
-		_title = titleEdit->text();
-		_artist = artistEdit->text();
+	addButton(rpl::single(u"Сохранить"_q), [=] {
+		_title = _titleInput->getLastText().trimmed();
+		_artist = _artistInput->getLastText().trimmed();
 		apply();
+		closeBox();
 	});
-	buttonsLayout->addWidget(saveBtn);
 
-	layout->addLayout(buttonsLayout);
+	addButton(rpl::single(tr::lng_close(tr::now)), [=] {
+		closeBox();
+	});
 }
 
 void AudioTagsBox::apply() {
-	TagInfo info{
-		.title = _title,
-		.artist = _artist,
-		.cover = _cover,
-	};
-	const auto tempDst = _filePath + u".tagged.tmp"_q;
-	if (WriteTags(_filePath, tempDst, info)) {
-		QFile::remove(_filePath);
-		QFile::rename(tempDst, _filePath);
-		accept();
-	} else {
-		QFile::remove(tempDst);
-		QMessageBox::warning(
-			this,
-			u"Ошибка"_q,
-			u"Не удалось записать теги в аудиофайл."_q);
-	}
+	TagData data;
+	data.title = _title;
+	data.artist = _artist;
+	data.cover = _cover;
+	WriteTags(_filePath, data);
 }
 
 } // namespace Margy::Tags

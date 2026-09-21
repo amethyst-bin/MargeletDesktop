@@ -14,6 +14,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_statistics.h"
 #include "margy/margy_config.h"
 #include "margy/profile/margy_profile_id.h"
+#include "margy/badges/margy_badge_manager.h"
+#include "margy/badges/margy_badge_box.h"
 #include "apiwrap.h"
 #include "base/call_delayed.h"
 #include "base/event_filter.h"
@@ -1891,6 +1893,33 @@ Section DetailsFiller::makeInfo() {
 			controller->showToast(u"ID скопирован в буфер обмена"_q);
 			return false;
 		});
+	}
+	if (_peer) {
+		int64_t bareId = 0;
+		if (peerIsUser(_peer->id)) {
+			bareId = static_cast<int64_t>(peerToUser(_peer->id).bare);
+		} else if (peerIsChannel(_peer->id)) {
+			bareId = -static_cast<int64_t>(peerToChannel(_peer->id).bare);
+		} else if (peerIsChat(_peer->id)) {
+			bareId = -static_cast<int64_t>(peerToChat(_peer->id).bare);
+		}
+		auto margyBadge = Margy::Badges::Of(bareId);
+		if (!margyBadge && bareId != 0) {
+			margyBadge = Margy::Badges::Of(-bareId);
+		}
+		if (margyBadge) {
+			const auto isRu = QLocale::system().name().startsWith(u"ru"_q, Qt::CaseInsensitive);
+			const auto badgeTitle = margyBadge->title(isRu);
+			const auto badgeLine = addInfoOneLine(
+				u"Бейдж Margy"_q,
+				rpl::single(tr::marked(badgeTitle)),
+				badgeTitle);
+			badgeLine.text->setLinksTrusted();
+			badgeLine.text->setClickHandlerFilter([b = *margyBadge](const auto &...) {
+				Margy::Badges::BadgeBox::Show(nullptr, b);
+				return false;
+			});
+		}
 	}
 	raw->toggleOn(tracker.atLeastOneShownValue());
 	raw->finishAnimating();

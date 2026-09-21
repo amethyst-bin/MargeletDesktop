@@ -1,20 +1,18 @@
 #pragma once
 
-#include <QDialog>
+#include "ui/layers/box_content.h"
 
 namespace Margy::Donate {
 
-class DonateBox final : public QDialog {
-	Q_OBJECT
-
+class DonateBox final : public ::Ui::BoxContent {
 public:
-	explicit DonateBox(QWidget *parent);
+	explicit DonateBox(QWidget *parent = nullptr);
 	~DonateBox() override = default;
 
-	static void Show(QWidget *parent);
+	static void Show(QWidget *parent = nullptr);
 
-private:
-	void setupUi();
+protected:
+	void prepare() override;
 };
 
 } // namespace Margy::Donate

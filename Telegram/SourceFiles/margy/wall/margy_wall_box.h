@@ -1,39 +1,33 @@
 #pragma once
 
-#include <QDialog>
+#include "ui/layers/box_content.h"
 #include <QString>
 #include <cstdint>
-#include <vector>
 
-class QListWidget;
-class QTextEdit;
+namespace Ui {
+class InputField;
+class VerticalLayout;
+} // namespace Ui
 
 namespace Margy::Wall {
 
-struct Post {
-	int64_t id = 0;
-	QString author;
-	QString text;
-	QString timestamp;
-};
-
-class WallBox final : public QDialog {
-	Q_OBJECT
-
+class WallBox final : public ::Ui::BoxContent {
 public:
 	explicit WallBox(QWidget *parent, int64_t peerId = 0);
 	~WallBox() override = default;
 
-	static void Show(QWidget *parent, int64_t peerId = 0);
+	static void Show(QWidget *parent = nullptr, int64_t peerId = 0);
+
+protected:
+	void prepare() override;
 
 private:
-	void setupUi();
 	void loadPosts();
 	void addPost(const QString &text);
 
 	int64_t _peerId = 0;
-	QListWidget *_postsList = nullptr;
-	QTextEdit *_input = nullptr;
+	::Ui::VerticalLayout *_postsContainer = nullptr;
+	::Ui::InputField *_input = nullptr;
 };
 
 } // namespace Margy::Wall

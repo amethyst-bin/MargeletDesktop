@@ -10,6 +10,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/unixtime.h"
 #include "lang/lang_keys.h"
 #include "countries/countries_instance.h"
+#include "margy/streamer/margy_streamer.h"
+#include "margy/margy_config.h"
 
 #include <QtCore/QLocale>
 #include <locale>
@@ -429,9 +431,13 @@ QString FormatPhone(QString phone) {
 		return phone;
 	}
 	phone = phone.remove(QChar::Space);
-	return Countries::Instance().format({
+	const auto formatted = Countries::Instance().format({
 		.phone = (phone.at(0) == '+') ? phone.mid(1) : phone,
 	}).formatted;
+	if (Margy::StreamerMode()) {
+		return Margy::Streamer::MaskPhone(formatted);
+	}
+	return formatted;
 }
 
 QString FormatTTL(float64 ttl) {

@@ -1,11 +1,15 @@
 #include "margy/badges/margy_badge_box.h"
 #include "margy/badges/margy_plane_3d.h"
 #include "margy/badges/margy_badge_manager.h"
+#include "ui/layers/generic_box.h"
+#include "ui/wrap/vertical_layout.h"
+#include "ui/widgets/labels.h"
+#include "ui/widgets/buttons.h"
+#include "ui/ui_utility.h"
+#include "lang/lang_keys.h"
+#include "styles/style_layers.h"
+#include "styles/style_boxes.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QPushButton>
 #include <QDesktopServices>
 #include <QUrl>
 #include <QLocale>
@@ -13,17 +17,13 @@
 namespace Margy::Badges {
 
 BadgeBox::BadgeBox(QWidget *parent, const Badge &badge)
-: QDialog(parent) {
-	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-	setupUi(badge);
+: _badge(badge) {
 }
 
 BadgeBox::~BadgeBox() = default;
 
 void BadgeBox::Show(QWidget *parent, const Badge &badge) {
-	auto *box = new BadgeBox(parent, badge);
-	box->setAttribute(Qt::WA_DeleteOnClose);
-	box->show();
+	::Ui::show(::Box<BadgeBox>(badge));
 }
 
 void BadgeBox::Show(QWidget *parent, int64_t peerId) {
@@ -32,57 +32,44 @@ void BadgeBox::Show(QWidget *parent, int64_t peerId) {
 	}
 }
 
-void BadgeBox::setupUi(const Badge &badge) {
+void BadgeBox::prepare() {
 	const auto isRu = QLocale::system().name().startsWith(u"ru"_q, Qt::CaseInsensitive);
 
-	setWindowTitle(badge.title(isRu));
-	setMinimumWidth(320);
+	setTitle(rpl::single(_badge.title(isRu)));
+	setDimensions(st::boxWideWidth, 360);
 
-	auto *layout = new QVBoxLayout(this);
-	layout->setContentsMargins(24, 20, 24, 20);
-	layout->setSpacing(16);
+	const auto content = setInnerWidget(
+		object_ptr<::Ui::VerticalLayout>(this));
 
-	// Title
-	auto *titleLabel = new QLabel(badge.title(isRu), this);
-	titleLabel->setAlignment(Qt::AlignCenter);
-	auto font = titleLabel->font();
-	font.setPointSize(font.pointSize() + 3);
-	font.setBold(true);
-	titleLabel->setFont(font);
-	layout->addWidget(titleLabel);
+	// 3D Plane widget in center
+	const auto planeWrap = content->add(
+		object_ptr<::Ui::FixedHeightWidget>(content, 160));
+	const auto plane = ::Ui::CreateChild<Plane3D>(planeWrap, _badge.color);
+	plane->resize(160, 160);
+	planeWrap->widthValue(
+	) | rpl::on_next([=](int w) {
+		plane->move((w - 160) / 2, 0);
+	}, planeWrap->lifetime());
 
-	// 3D Plane widget
-	auto *plane = new Plane3D(this, badge.color);
-	plane->setFixedSize(160, 160);
-	layout->addWidget(plane, 0, Qt::AlignCenter);
+	// Description label
+	content->add(
+		object_ptr<::Ui::FlatLabel>(
+			content,
+			_badge.about(isRu),
+			st::boxLabel),
+		st::boxRowPadding,
+		style::al_center);
 
-	// About description
-	auto *aboutLabel = new QLabel(badge.about(isRu), this);
-	aboutLabel->setAlignment(Qt::AlignCenter);
-	aboutLabel->setWordWrap(true);
-	layout->addWidget(aboutLabel);
-
-	// Buttons
-	auto *buttonsLayout = new QHBoxLayout();
-	buttonsLayout->setSpacing(12);
-
-	if (!badge.url.isEmpty()) {
+	if (!_badge.url.isEmpty()) {
 		const auto actionText = isRu ? u"Перейти"_q : u"Open"_q;
-		const auto actionButton = new QPushButton(actionText, this);
-		actionButton->setCursor(Qt::PointingHandCursor);
-		connect(actionButton, &QPushButton::clicked, this, [url = badge.url] {
+		addButton(rpl::single(actionText), [url = _badge.url] {
 			QDesktopServices::openUrl(QUrl(url));
 		});
-		buttonsLayout->addWidget(actionButton);
 	}
 
-	const auto closeText = isRu ? u"Закрыть"_q : u"Close"_q;
-	const auto closeButton = new QPushButton(closeText, this);
-	closeButton->setCursor(Qt::PointingHandCursor);
-	connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
-	buttonsLayout->addWidget(closeButton);
-
-	layout->addLayout(buttonsLayout);
+	addButton(rpl::single(tr::lng_close(tr::now)), [=] {
+		closeBox();
+	});
 }
 
 } // namespace Margy::Badges

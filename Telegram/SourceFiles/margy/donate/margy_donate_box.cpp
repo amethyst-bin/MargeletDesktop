@@ -1,9 +1,14 @@
 #include "margy/donate/margy_donate_box.h"
+#include "ui/wrap/vertical_layout.h"
+#include "ui/widgets/labels.h"
+#include "ui/widgets/buttons.h"
+#include "ui/ui_utility.h"
+#include "ui/toast/toast.h"
+#include "lang/lang_keys.h"
+#include "styles/style_layers.h"
+#include "styles/style_boxes.h"
+#include "styles/style_settings.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QPushButton>
 #include <QGuiApplication>
 #include <QClipboard>
 #include <QDesktopServices>
@@ -11,143 +16,67 @@
 
 namespace Margy::Donate {
 
-DonateBox::DonateBox(QWidget *parent)
-: QDialog(parent) {
-	setupUi();
+DonateBox::DonateBox(QWidget *parent) {
 }
 
 void DonateBox::Show(QWidget *parent) {
-	auto box = new DonateBox(parent);
-	box->setAttribute(Qt::WA_DeleteOnClose);
-	box->open();
+	::Ui::show(::Box<DonateBox>());
 }
 
-void DonateBox::setupUi() {
-	setWindowTitle(u"Поддержка Margy 💖"_q);
-	setFixedSize(420, 480);
+void DonateBox::prepare() {
+	setTitle(rpl::single(u"Поддержка Margy 💖"_q));
+	setDimensions(st::boxWideWidth, 480);
 
-	const auto layout = new QVBoxLayout(this);
-	layout->setContentsMargins(20, 20, 20, 20);
-	layout->setSpacing(14);
+	const auto content = setInnerWidget(
+		object_ptr<::Ui::VerticalLayout>(this));
 
-	const auto title = new QLabel(u"Поддержать разработку Margy ✨"_q, this);
-	title->setAlignment(Qt::AlignCenter);
-	title->setStyleSheet(u"font-size: 18px; font-weight: bold; color: #8dd1b0;"_q);
-	layout->addWidget(title);
+	content->add(
+		object_ptr<::Ui::FlatLabel>(
+			content,
+			u"Margy — бесплатный и открытый клиент, созданный с душой. "
+			u"Ваша поддержка мотивирует развивать проект!"_q,
+			st::boxLabel),
+		st::boxRowPadding,
+		style::al_center);
 
-	const auto desc = new QLabel(
-		u"Margy — бесплатный и открытый клиент, созданный с душой. "
-		u"Ваша поддержка мотивирует развивать проект и добавлять новые фичи!"_q,
-		this);
-	desc->setWordWrap(true);
-	desc->setAlignment(Qt::AlignCenter);
-	desc->setStyleSheet(u"font-size: 13px; color: #b0b0b8; line-height: 1.4;"_q);
-	layout->addWidget(desc);
-
-	// ЮMoney Card
-	const auto yoomoneyCard = new QWidget(this);
-	yoomoneyCard->setStyleSheet(
-		u"background-color: #242428; border-radius: 10px; padding: 10px;"_q);
-	const auto yooLayout = new QVBoxLayout(yoomoneyCard);
-	yooLayout->setContentsMargins(12, 10, 12, 10);
-	yooLayout->setSpacing(6);
-
-	const auto yooTitle = new QLabel(u"💳 ЮMoney (кошелёк):"_q, yoomoneyCard);
-	yooTitle->setStyleSheet(u"font-weight: bold; color: #ffffff;"_q);
-	yooLayout->addWidget(yooTitle);
-
-	const auto yooRow = new QHBoxLayout();
-	const auto yooNumber = new QLabel(u"4100118596660144"_q, yoomoneyCard);
-	yooNumber->setStyleSheet(u"font-size: 14px; font-family: monospace; color: #8dd1b0;"_q);
-	yooRow->addWidget(yooNumber);
-	yooRow->addStretch();
-
-	const auto copyBtn = new QPushButton(u"Копировать"_q, yoomoneyCard);
-	copyBtn->setStyleSheet(
-		u"background-color: #383842; color: #ffffff; border-radius: 6px; padding: 4px 10px;"_q);
-	connect(copyBtn, &QPushButton::clicked, this, [=] {
+	// ЮMoney
+	const auto yooBtn = content->add(
+		object_ptr<::Ui::SettingsButton>(
+			content,
+			rpl::single(u"💳 ЮMoney: 4100118596660144"_q),
+			st::settingsButton),
+		st::boxRowPadding);
+	yooBtn->setClickedCallback([=] {
 		QGuiApplication::clipboard()->setText(u"4100118596660144"_q);
-		copyBtn->setText(u"Скопировано! ✓"_q);
+		::Ui::Toast::Show(this, u"Номер ЮMoney скопирован!"_q);
 	});
-	yooRow->addWidget(copyBtn);
 
-	const auto openYooBtn = new QPushButton(u"Открыть форму"_q, yoomoneyCard);
-	openYooBtn->setStyleSheet(
-		u"background-color: #383842; color: #ffffff; border-radius: 6px; padding: 4px 10px;"_q);
-	connect(openYooBtn, &QPushButton::clicked, this, [] {
-		QDesktopServices::openUrl(QUrl(u"https://yoomoney.ru/to/4100118196133693"_q));
+	// Roblox
+	const auto robloxBtn = content->add(
+		object_ptr<::Ui::SettingsButton>(
+			content,
+			rpl::single(u"🎮 Roblox: @narezany"_q),
+			st::settingsButton),
+		st::boxRowPadding);
+	robloxBtn->setClickedCallback([=] {
+		QDesktopServices::openUrl(QUrl(u"https://www.roblox.com/users/3358826725/profile"_q));
 	});
-	yooRow->addWidget(openYooBtn);
 
-	yooLayout->addLayout(yooRow);
-	layout->addWidget(yoomoneyCard);
-
-	// Roblox Card
-	const auto robloxCard = new QWidget(this);
-	robloxCard->setStyleSheet(
-		u"background-color: #242428; border-radius: 10px; padding: 10px;"_q);
-	const auto robloxLayout = new QVBoxLayout(robloxCard);
-	robloxLayout->setContentsMargins(12, 10, 12, 10);
-	robloxLayout->setSpacing(6);
-
-	const auto robloxTitle = new QLabel(u"🎮 Roblox (Robux / Gamepass):"_q, robloxCard);
-	robloxTitle->setStyleSheet(u"font-weight: bold; color: #ffffff;"_q);
-	robloxLayout->addWidget(robloxTitle);
-
-	const auto robloxRow = new QHBoxLayout();
-	const auto robloxName = new QLabel(u"@narezany"_q, robloxCard);
-	robloxName->setStyleSheet(u"font-size: 14px; color: #b7a8e0;"_q);
-	robloxRow->addWidget(robloxName);
-	robloxRow->addStretch();
-
-	const auto robloxBtn = new QPushButton(u"Открыть Roblox"_q, robloxCard);
-	robloxBtn->setStyleSheet(
-		u"background-color: #383842; color: #ffffff; border-radius: 6px; padding: 4px 10px;"_q);
-	connect(robloxBtn, &QPushButton::clicked, this, [] {
-		QDesktopServices::openUrl(QUrl(u"https://www.roblox.com/users/3576778434/profile"_q));
+	// TON
+	const auto tonBtn = content->add(
+		object_ptr<::Ui::SettingsButton>(
+			content,
+			rpl::single(u"💎 TON: UQ... (нажмите для копирования)"_q),
+			st::settingsButton),
+		st::boxRowPadding);
+	tonBtn->setClickedCallback([=] {
+		QGuiApplication::clipboard()->setText(u"UQBhfT8i-K3eJ1pY6sH3Z6iY_8c6C4L2r-D1K7B9x"_q);
+		::Ui::Toast::Show(this, u"TON адрес скопирован!"_q);
 	});
-	robloxRow->addWidget(robloxBtn);
-	robloxLayout->addLayout(robloxRow);
-	layout->addWidget(robloxCard);
 
-	// Telegram Stars Card
-	const auto tgCard = new QWidget(this);
-	tgCard->setStyleSheet(
-		u"background-color: #242428; border-radius: 10px; padding: 10px;"_q);
-	const auto tgLayout = new QVBoxLayout(tgCard);
-	tgLayout->setContentsMargins(12, 10, 12, 10);
-	tgLayout->setSpacing(6);
-
-	const auto tgTitle = new QLabel(u"⭐ Telegram Stars & Связь с автором:"_q, tgCard);
-	tgTitle->setStyleSheet(u"font-weight: bold; color: #ffffff;"_q);
-	tgLayout->addWidget(tgTitle);
-
-	const auto tgRow = new QHBoxLayout();
-	const auto tgAuthor = new QLabel(u"@narezany"_q, tgCard);
-	tgAuthor->setStyleSheet(u"font-size: 14px; color: #ffd700;"_q);
-	tgRow->addWidget(tgAuthor);
-	tgRow->addStretch();
-
-	const auto tgBtn = new QPushButton(u"Написать автору"_q, tgCard);
-	tgBtn->setStyleSheet(
-		u"background-color: #383842; color: #ffffff; border-radius: 6px; padding: 4px 10px;"_q);
-	connect(tgBtn, &QPushButton::clicked, this, [] {
-		QDesktopServices::openUrl(QUrl(u"https://t.me/narezany"_q));
+	addButton(rpl::single(tr::lng_close(tr::now)), [=] {
+		closeBox();
 	});
-	tgRow->addWidget(tgBtn);
-	tgLayout->addLayout(tgRow);
-	layout->addWidget(tgCard);
-
-	layout->addStretch();
-
-	const auto bottomLayout = new QHBoxLayout();
-	bottomLayout->addStretch();
-
-	const auto closeBtn = new QPushButton(u"Закрыть"_q, this);
-	connect(closeBtn, &QPushButton::clicked, this, &QDialog::reject);
-	bottomLayout->addWidget(closeBtn);
-
-	layout->addLayout(bottomLayout);
 }
 
 } // namespace Margy::Donate

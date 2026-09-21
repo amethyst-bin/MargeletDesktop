@@ -13,6 +13,7 @@
 #include "margy/gifts/margy_gifts.h"
 #include "margy/plugins/ui/margy_plugins_box.h"
 #include "margy/plugins/ui/margy_plugin_console_box.h"
+#include "settings/settings_common.h"
 
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
@@ -24,6 +25,7 @@
 #include "styles/style_settings.h"
 #include "styles/style_boxes.h"
 #include "styles/style_layers.h"
+#include "styles/style_menu_icons.h"
 
 #include <QDesktopServices>
 #include <QUrl>
@@ -66,8 +68,18 @@ void MargySettingsSection::setupContent() {
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
 
-	// Badges & Gallery
-	Ui::AddSubsectionTitle(content, rpl::single(u"Бейджи и галерея"_q));
+	// 1. Badges Section
+	Ui::AddSubsectionTitle(content, rpl::single(u"Бейджи сообщества Margy"_q));
+
+	const auto galleryBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Открыть галерею бейджей"_q),
+		st::settingsButton,
+		{ &st::menuIconStar, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xF5, 0x9E, 0x0B)) });
+	galleryBtn->setClickedCallback([=] {
+		Badges::BadgeGalleryBox::Show(this);
+	});
+
 	content->add(
 		object_ptr<Ui::Checkbox>(
 			content,
@@ -80,21 +92,150 @@ void MargySettingsSection::setupContent() {
 		Config::Instance().setBadgesEnabled(checked);
 	}, content->lifetime());
 
-	const auto galleryBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Открыть галерею бейджей"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	galleryBtn->setClickedCallback([=] {
-		Badges::BadgeGalleryBox::Show(this);
+	Ui::AddSkip(content);
+	Ui::AddDivider(content);
+
+	// 2. Customization & Appearance
+	Ui::AddSubsectionTitle(content, rpl::single(u"Кастомизация и оформление"_q));
+
+	const auto catsBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Коты Margy 🐾"_q),
+		st::settingsButton,
+		{ &st::menuIconStickers, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xEC, 0x48, 0x99)) });
+	catsBtn->setClickedCallback([=] {
+		Cats::CatsBox::Show(this);
 	});
+
+	const auto fontsBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Шрифты интерфейса и эмодзи (Twemoji)..."_q),
+		st::settingsButton,
+		{ &st::menuIconChatBubble, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x3B, 0x82, 0xF6)) });
+	fontsBtn->setClickedCallback([=] {
+		Fonts::FontsBox::Show(this);
+	});
+
+	const auto gradBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Двухцветный градиент профиля..."_q),
+		st::settingsButton,
+		{ &st::menuIconPalette, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x8B, 0x5C, 0xF6)) });
+	gradBtn->setClickedCallback([=] {
+		Gradient::GradientBox::Show(this);
+	});
+
+	const auto wallBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Стена профиля 📝"_q),
+		st::settingsButton,
+		{ &st::menuIconEdit, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x10, 0xB9, 0x81)) });
+	wallBtn->setClickedCallback([=] {
+		Wall::WallBox::Show(this);
+	});
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Красить свои сообщения градиентом профиля"_q,
+			Config::Instance().ownBubblesGradient(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setOwnBubblesGradient(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Премиум-значки для всех (видны в Margy)"_q,
+			Config::Instance().freeEmoji(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setFreeEmoji(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Показывать скрытые подарки (Star Gifts)"_q,
+			Config::Instance().unhideGifts(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setUnhideGifts(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Закреплять каналы первыми"_q,
+			Config::Instance().pinChannelFirst(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setPinChannelFirst(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Скрывать папку «Все чаты»"_q,
+			Config::Instance().hideAllChatsTab(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setHideAllChatsTab(checked);
+	}, content->lifetime());
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
 
-	// Profile & Privacy (Streamer mode)
-	Ui::AddSubsectionTitle(content, rpl::single(u"Профиль и приватность"_q));
+	// 3. Streamer Mode & Privacy
+	Ui::AddSubsectionTitle(content, rpl::single(u"Режим стримера и приватность"_q));
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Режим стримера (полная маскировка +• ••• •••-••-••)"_q,
+			Config::Instance().streamerMode(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setStreamerMode(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Скрывать чужие юзернеймы"_q,
+			Config::Instance().streamerHidesOthers(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setStreamerHidesOthers(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Скрывать свой юзернейм"_q,
+			Config::Instance().streamerHidesUsername(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setStreamerHidesUsername(checked);
+	}, content->lifetime());
+
 	content->add(
 		object_ptr<Ui::Checkbox>(
 			content,
@@ -107,47 +248,6 @@ void MargySettingsSection::setupContent() {
 		Config::Instance().setShowIds(checked);
 	}, content->lifetime());
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Режим стримера (маскировка телефона)"_q,
-			Config::Instance().streamerMode(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setStreamerMode(checked);
-	}, content->lifetime());
-
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Режим стримера: скрывать чужие юзернеймы"_q,
-			Config::Instance().streamerHidesOthers(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setStreamerHidesOthers(checked);
-	}, content->lifetime());
-
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Режим стримера: скрывать свой юзернейм"_q,
-			Config::Instance().streamerHidesUsername(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setStreamerHidesUsername(checked);
-	}, content->lifetime());
-
-	Ui::AddSkip(content);
-	Ui::AddDivider(content);
-
-	// Conveniences
-	Ui::AddSubsectionTitle(content, rpl::single(u"Удобства"_q));
 	content->add(
 		object_ptr<Ui::Checkbox>(
 			content,
@@ -175,127 +275,26 @@ void MargySettingsSection::setupContent() {
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
 
-	// Cats Viewer
-	Ui::AddSubsectionTitle(content, rpl::single(u"Коты Margy 🐾"_q));
-	const auto catsBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Посмотреть котиков в приложении 🐱"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	catsBtn->setClickedCallback([=] {
-		Cats::CatsBox::Show(this);
-	});
-
-	// Appearance & Fonts
-	Ui::AddSkip(content);
-	Ui::AddDivider(content);
-	Ui::AddSubsectionTitle(content, rpl::single(u"Внешний вид и шрифты"_q));
-
-	const auto fontsBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Шрифты интерфейса и эмодзи (Twemoji)..."_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	fontsBtn->setClickedCallback([=] {
-		Fonts::FontsBox::Show(this);
-	});
-
-	const auto gradBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Двухцветный градиент профиля..."_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	gradBtn->setClickedCallback([=] {
-		Gradient::GradientBox::Show(this);
-	});
-
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Красить свои сообщения градиентом профиля"_q,
-			Config::Instance().ownBubblesGradient(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setOwnBubblesGradient(checked);
-	}, content->lifetime());
-
-	// Wall
-	Ui::AddSkip(content);
-	Ui::AddDivider(content);
-	Ui::AddSubsectionTitle(content, rpl::single(u"Стена Margy"_q));
-
-	const auto wallBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Открыть стену профиля 📝"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	wallBtn->setClickedCallback([=] {
-		Wall::WallBox::Show(this);
-	});
-
-	// Gifts and Channels
-	Ui::AddSkip(content);
-	Ui::AddDivider(content);
-	Ui::AddSubsectionTitle(content, rpl::single(u"Подарки и возможности"_q));
-
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Показывать скрытые подарки (Star Gifts)"_q,
-			Config::Instance().unhideGifts(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setUnhideGifts(checked);
-	}, content->lifetime());
-
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Премиум-значки для всех (видны в Margy)"_q,
-			Config::Instance().freeEmoji(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setFreeEmoji(checked);
-	}, content->lifetime());
-
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Закреплять каналы первыми"_q,
-			Config::Instance().pinChannelFirst(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setPinChannelFirst(checked);
-	}, content->lifetime());
-
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Скрывать папку «Все чаты»"_q,
-			Config::Instance().hideAllChatsTab(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setHideAllChatsTab(checked);
-	}, content->lifetime());
-
-	// Plugins
-	Ui::AddSkip(content);
-	Ui::AddDivider(content);
+	// 4. Plugins Margelet
 	Ui::AddSubsectionTitle(content, rpl::single(u"Плагины Margelet"_q));
+
+	const auto pluginsBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Управление плагинами (.marp)"_q),
+		st::settingsButton,
+		{ &st::menuIconManage, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x06, 0xB6, 0xD4)) });
+	pluginsBtn->setClickedCallback([=] {
+		Plugins::UI::PluginsBox::Show(this);
+	});
+
+	const auto pluginConsoleBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Консоль плагинов"_q),
+		st::settingsButton,
+		{ &st::menuIconUnmute, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x47, 0x55, 0x69)) });
+	pluginConsoleBtn->setClickedCallback([=] {
+		Plugins::UI::PluginConsoleBox::Show(this);
+	});
 
 	content->add(
 		object_ptr<Ui::Checkbox>(
@@ -321,30 +320,11 @@ void MargySettingsSection::setupContent() {
 		Config::Instance().setPluginHooksEnabled(checked);
 	}, content->lifetime());
 
-	const auto pluginsBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Управление плагинами (.marp)"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	pluginsBtn->setClickedCallback([=] {
-		Plugins::UI::PluginsBox::Show(this);
-	});
-
-	const auto pluginConsoleBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Консоль плагинов"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	pluginConsoleBtn->setClickedCallback([=] {
-		Plugins::UI::PluginConsoleBox::Show(this);
-	});
-
-	// Proxy
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
-	Ui::AddSubsectionTitle(content, rpl::single(u"Сеть и прокси"_q));
+
+	// 5. Network, Sounds & Easter Eggs
+	Ui::AddSubsectionTitle(content, rpl::single(u"Сеть, звуки и пасхалки"_q));
 
 	content->add(
 		object_ptr<Ui::Checkbox>(
@@ -362,10 +342,6 @@ void MargySettingsSection::setupContent() {
 		}
 	}, content->lifetime());
 
-	// Sound (Easter egg)
-	Ui::AddSkip(content);
-	Ui::AddDivider(content);
-	Ui::AddSubsectionTitle(content, rpl::single(u"Звуки и пасхалки"_q));
 	content->add(
 		object_ptr<Ui::Checkbox>(
 			content,
@@ -377,6 +353,15 @@ void MargySettingsSection::setupContent() {
 	) | rpl::on_next([=](bool checked) {
 		Config::Instance().setMeowEnabled(checked);
 	}, content->lifetime());
+
+	const auto testSoundBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Проверить звук 🐾"_q),
+		st::settingsButton,
+		{ &st::menuIconSoundOn, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xEA, 0xB3, 0x08)) });
+	testSoundBtn->setClickedCallback([=] {
+		Sound::PlayMeow();
+	});
 
 	content->add(
 		object_ptr<Ui::Checkbox>(
@@ -390,72 +375,53 @@ void MargySettingsSection::setupContent() {
 		Config::Instance().setSeizureMode(checked);
 	}, content->lifetime());
 
-	const auto testSoundBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Проверить звук 🐾"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
-	testSoundBtn->setClickedCallback([=] {
-		Sound::PlayMeow();
-	});
-
-	// Support & Donate
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
-	Ui::AddSubsectionTitle(content, rpl::single(u"Поддержка проекта"_q));
 
-	const auto donateBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Поддержать развитие Margy (Донат) 💖"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
+	// 6. Support & Community
+	Ui::AddSubsectionTitle(content, rpl::single(u"Поддержка и сообщество Margy"_q));
+
+	const auto donateBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Поддержать развитие Margy (Донат) 💖"_q),
+		st::settingsButton,
+		{ &st::menuIconPremium, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xEF, 0x44, 0x44)) });
 	donateBtn->setClickedCallback([=] {
 		Donate::DonateBox::Show(this);
 	});
 
-	// Community & Links
-	Ui::AddSkip(content);
-	Ui::AddDivider(content);
-	Ui::AddSubsectionTitle(content, rpl::single(u"Сообщество Margy"_q));
-
-	const auto channelBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Канал Margelet (Telegram)"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
+	const auto channelBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Канал Margelet (Telegram)"_q),
+		st::settingsButton,
+		{ &st::menuIconChannel, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x02, 0x84, 0xC7)) });
 	channelBtn->setClickedCallback([] {
 		QDesktopServices::openUrl(QUrl(u"https://t.me/margeletter"_q));
 	});
 
-	const auto stickersBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Стикерпак Margelet (Telegram)"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
+	const auto stickersBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Стикерпак Margelet (Telegram)"_q),
+		st::settingsButton,
+		{ &st::menuIconStickers, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x8B, 0x5C, 0xF6)) });
 	stickersBtn->setClickedCallback([] {
 		QDesktopServices::openUrl(QUrl(u"https://t.me/addstickers/MargeletPackMargeletter"_q));
 	});
 
-	const auto forumBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Форум сообщества"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
+	const auto forumBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Форум сообщества"_q),
+		st::settingsButton,
+		{ &st::menuIconDiscussion, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x63, 0x66, 0xF1)) });
 	forumBtn->setClickedCallback([] {
 		QDesktopServices::openUrl(QUrl(u"https://t.me/margeletforum"_q));
 	});
 
-	const auto ghBtn = content->add(
-		object_ptr<Ui::SettingsButton>(
-			content,
-			rpl::single(u"Репозиторий MargyDesktop"_q),
-			st::settingsButton),
-		st::settingsSendTypePadding);
+	const auto ghBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Репозиторий MargyDesktop"_q),
+		st::settingsButton,
+		{ &st::menuIconInvite, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x33, 0x41, 0x55)) });
 	ghBtn->setClickedCallback([] {
 		QDesktopServices::openUrl(QUrl(u"https://github.com/amethyst-bin/MargeletDesktop"_q));
 	});

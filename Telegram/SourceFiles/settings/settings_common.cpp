@@ -398,6 +398,7 @@ void Icon::paint(QPainter &p, QPoint position) const {
 void Icon::paint(QPainter &p, int x, int y) const {
 	if (_background) {
 		_background->paint(p, { { x, y }, _icon->size() });
+		_icon->paint(p, { x, y }, 2 * x + _icon->width(), Qt::white);
 	} else if (_backgroundBrush) {
 		PainterHighQualityEnabler hq(p);
 		p.setPen(Qt::NoPen);
@@ -406,8 +407,10 @@ void Icon::paint(QPainter &p, int x, int y) const {
 			QRect(QPoint(x, y), _icon->size()),
 			_backgroundBrush->first,
 			_backgroundBrush->first);
+		_icon->paint(p, { x, y }, 2 * x + _icon->width(), Qt::white);
+	} else {
+		_icon->paint(p, { x, y }, 2 * x + _icon->width());
 	}
-	_icon->paint(p, { x, y }, 2 * x + _icon->width());
 }
 
 int Icon::width() const {
