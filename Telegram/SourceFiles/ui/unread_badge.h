@@ -96,6 +96,7 @@ private:
 	int drawVerifyCheck(Painter &p, const Descriptor &descriptor);
 	int drawPremiumEmojiStatus(Painter &p, const Descriptor &descriptor);
 	int drawPremiumStar(Painter &p, const Descriptor &descriptor);
+	int drawMargyBadge(Painter &p, const Descriptor &descriptor, const QColor &color);
 
 	std::unique_ptr<EmojiStatus> _emojiStatus;
 	mutable std::unique_ptr<BotVerifiedData> _botVerifiedData;

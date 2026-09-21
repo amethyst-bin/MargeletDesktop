@@ -23,12 +23,17 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "styles/style_info.h"
 
+#include "margy/badges/margy_badge_manager.h"
+#include "margy/badges/margy_badge_icon.h"
+#include "margy/badges/margy_badge_box.h"
+
 namespace Info::Profile {
 namespace {
 
 [[nodiscard]] bool HasPremiumClick(const Badge::Content &content) {
 	return content.badge == BadgeType::Premium
-		|| (content.badge == BadgeType::Verified && content.emojiStatusId);
+		|| (content.badge == BadgeType::Verified && content.emojiStatusId)
+		|| (content.badge == BadgeType::Margy);
 }
 
 } // namespace
@@ -99,6 +104,8 @@ void Badge::setContent(Content content) {
 			return tr::lng_fake_badge(tr::now);
 		case BadgeType::Direct:
 			return tr::lng_direct_badge(tr::now);
+		case BadgeType::Margy:
+			return QString("Margy Badge");
 		}
 		Unexpected("badge type");
 	}());
@@ -208,9 +215,23 @@ void Badge::setContent(Content content) {
 						: st::attentionButtonFg));
 			}, _view->lifetime());
 	} break;
+	case BadgeType::Margy: {
+		const auto size = 20;
+		_view->resize(size, size);
+		_view->paintRequest(
+		) | rpl::on_next([=, check = _view.data(), color = _content.margyColor]{
+			Painter p(check);
+			Margy::Badges::PaintBadgeIcon(p, check->rect(), color);
+		}, _view->lifetime());
+	} break;
 	}
 
-	if (!HasPremiumClick(_content) || !_premiumClickCallback) {
+	if (_content.badge == BadgeType::Margy) {
+		_view->setCursor(Qt::PointingHandCursor);
+		_view->setClickedCallback([parent = _parent, peerId = _content.margyPeerId] {
+			Margy::Badges::BadgeBox::Show(parent, peerId);
+		});
+	} else if (!HasPremiumClick(_content) || !_premiumClickCallback) {
 		_view->setAttribute(Qt::WA_TransparentForMouseEvents);
 	} else {
 		_view->setClickedCallback(_premiumClickCallback);
@@ -275,6 +296,19 @@ Data::CustomEmojiSizeTag Badge::sizeTag() const {
 }
 
 rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
+	int64_t bareId = 0;
+	if (peerIsUser(peer->id)) {
+		bareId = static_cast<int64_t>(peerToUser(peer->id).bare);
+	} else if (peerIsChannel(peer->id)) {
+		bareId = -static_cast<int64_t>(peerToChannel(peer->id).bare);
+	} else if (peerIsChat(peer->id)) {
+		bareId = -static_cast<int64_t>(peerToChat(peer->id).bare);
+	}
+	auto margyBadge = Margy::Badges::Of(bareId);
+	if (!margyBadge && bareId != 0) {
+		margyBadge = Margy::Badges::Of(-bareId);
+	}
+
 	const auto statusOnlyForPremium = peer->isUser();
 	return rpl::combine(
 		BadgeValue(peer),
@@ -290,6 +324,14 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 			emojiStatusId = EmojiStatusId();
 		} else if (emojiStatusId && badge == BadgeType::None) {
 			badge = BadgeType::Premium;
+		}
+		if (margyBadge.has_value() && badge == BadgeType::None) {
+			return Badge::Content{
+				BadgeType::Margy,
+				emojiStatusId,
+				margyBadge->color,
+				bareId
+			};
 		}
 		return Badge::Content{ badge, emojiStatusId };
 	});

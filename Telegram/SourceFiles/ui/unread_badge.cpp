@@ -21,6 +21,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/unread_badge_paint.h"
 #include "styles/style_dialogs.h"
 
+#include "margy/badges/margy_badge_manager.h"
+#include "margy/badges/margy_badge_icon.h"
+
 namespace Ui {
 namespace {
 
@@ -282,11 +285,30 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 	}
 	if (paintVerify) {
 		result += drawVerifyCheck(p, descriptor);
-		return result;
 	} else if (paintStar) {
-		return drawPremiumStar(p, descriptor);
+		result += drawPremiumStar(p, descriptor);
 	}
-	return 0;
+
+	int64_t bareId = 0;
+	if (peerIsUser(peer->id)) {
+		bareId = static_cast<int64_t>(peerToUser(peer->id).bare);
+	} else if (peerIsChannel(peer->id)) {
+		bareId = -static_cast<int64_t>(peerToChannel(peer->id).bare);
+	} else if (peerIsChat(peer->id)) {
+		bareId = -static_cast<int64_t>(peerToChat(peer->id).bare);
+	}
+
+	auto margyBadge = Margy::Badges::Of(bareId);
+	if (!margyBadge && bareId != 0) {
+		margyBadge = Margy::Badges::Of(-bareId);
+	}
+	if (margyBadge.has_value()) {
+		const auto skip = (result > 0) ? (st::dialogsScamSkip > 0 ? st::dialogsScamSkip : 4) : 0;
+		descriptor.nameWidth += result + skip;
+		result += skip + drawMargyBadge(p, descriptor, margyBadge->color);
+		return result;
+	}
+	return result;
 }
 
 int PeerBadge::drawTextBadge(Painter &p, const Descriptor &descriptor) {
@@ -390,6 +412,18 @@ int PeerBadge::drawPremiumStar(Painter &p, const Descriptor &descriptor) {
 	const auto icony = rectForName.y();
 	_emojiStatus = nullptr;
 	descriptor.premium->paint(p, iconx, icony, descriptor.outerWidth);
+	return iconw;
+}
+
+int PeerBadge::drawMargyBadge(Painter &p, const Descriptor &descriptor, const QColor &color) {
+	const auto iconw = descriptor.verified ? descriptor.verified->width() : (descriptor.premium ? descriptor.premium->width() : 16);
+	const auto iconh = descriptor.verified ? descriptor.verified->height() : (descriptor.premium ? descriptor.premium->height() : 16);
+	const auto rectForName = descriptor.rectForName;
+	const auto nameWidth = descriptor.nameWidth;
+	const auto x = rectForName.x() + std::min(nameWidth, rectForName.width() - iconw);
+	const auto y = rectForName.y() + (rectForName.height() - iconh) / 2;
+	const auto rect = QRect(x, y, iconw, iconh);
+	Margy::Badges::PaintBadgeIcon(p, rect, color);
 	return iconw;
 }
 
