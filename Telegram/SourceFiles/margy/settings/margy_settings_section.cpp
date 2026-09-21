@@ -23,6 +23,7 @@
 #include "window/window_session_controller.h"
 #include "styles/style_settings.h"
 #include "styles/style_boxes.h"
+#include "styles/style_layers.h"
 
 #include <QDesktopServices>
 #include <QUrl>
@@ -51,7 +52,7 @@ void MargySettingsSection::setupContent() {
 	planeWrap->widthValue(
 	) | rpl::on_next([=](int w) {
 		plane->move((w - 150) / 2, 0);
-	}, plane->lifetime());
+	}, planeWrap->lifetime());
 
 	// Title and Version
 	const auto titleLabel = content->add(

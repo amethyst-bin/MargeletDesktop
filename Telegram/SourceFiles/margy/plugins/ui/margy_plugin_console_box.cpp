@@ -7,6 +7,7 @@
 #include "ui/widgets/buttons.h"
 #include "styles/style_settings.h"
 #include "styles/style_boxes.h"
+#include "styles/style_layers.h"
 
 #include <QtWidgets/QPlainTextEdit>
 #include <QtWidgets/QApplication>

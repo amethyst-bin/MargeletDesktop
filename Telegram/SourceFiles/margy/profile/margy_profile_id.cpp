@@ -9,7 +9,7 @@ QString FormatPeerId(PeerId peerId) {
 	} else if (peerId.is<ChannelId>()) {
 		return u"-100"_q + QString::number(bare);
 	} else if (peerId.is<ChatId>()) {
-		return u'-'_q + QString::number(bare);
+		return u"-"_q + QString::number(bare);
 	}
 	return QString::number(bare);
 }
