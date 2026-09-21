@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "calls/calls_instance.h"
 #include "core/application.h"
 #include "core/click_handler_types.h"
+#include "margy/sound/margy_meow.h"
 #include "data/data_changes.h"
 #include "data/data_document_media.h"
 #include "data/data_folder.h"
@@ -350,6 +351,11 @@ MainMenu::MainMenu(
 	setupAccounts();
 	setupArchive();
 	setupMenu();
+
+	_telegram->setClickHandlerFilter([=](const auto &...) {
+		Margy::Sound::TriggerMeow(_telegram);
+		return false;
+	});
 
 	const auto shadow = Ui::CreateChild<Ui::PlainShadow>(this);
 	widthValue(

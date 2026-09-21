@@ -12,6 +12,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_credits.h"
 #include "api/api_report.h"
 #include "api/api_statistics.h"
+#include "margy/margy_config.h"
+#include "margy/profile/margy_profile_id.h"
 #include "apiwrap.h"
 #include "base/call_delayed.h"
 #include "base/event_filter.h"
@@ -1876,6 +1878,19 @@ Section DetailsFiller::makeInfo() {
 			setupAboutContextMenu(about.text, AboutWithAdvancedValue(_peer));
 			SetupAboutPeerIdDrag(about.text, _peer);
 		}
+	}
+	if (Margy::ShowIds() && _peer) {
+		const auto idText = Margy::Profile::FormatPeerId(_peer->id);
+		const auto idLine = addInfoOneLine(
+			u"ID"_q,
+			rpl::single(tr::marked(idText)),
+			idText);
+		idLine.text->setLinksTrusted();
+		idLine.text->setClickHandlerFilter([idText, controller = _controller->parentController()](const auto &...) {
+			TextUtilities::SetClipboardText({ idText });
+			controller->showToast(u"ID скопирован в буфер обмена"_q);
+			return false;
+		});
 	}
 	raw->toggleOn(tracker.atLeastOneShownValue());
 	raw->finishAnimating();

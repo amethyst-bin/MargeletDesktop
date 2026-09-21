@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/bank_card_click_handler.h"
 #include "core/sandbox.h"
 #include "core/click_handler_types.h"
+#include "margy/scheme/margy_scheme.h"
 #include "data/stickers/data_custom_emoji.h"
 #include "data/data_session.h"
 #include "iv/iv_instance.h"
@@ -430,6 +431,8 @@ bool UiIntegration::handleUrlClick(
 	} else if (local.startsWith(u"internal:"_q, Qt::CaseInsensitive)) {
 		Core::App().openInternalUrl(local, context);
 		return true;
+	} else if (local.startsWith(u"margy://"_q, Qt::CaseInsensitive)) {
+		return Margy::Scheme::HandleUrl(local, context);
 	} else if (Iv::PreferForUri(url)
 		&& !context.value<ClickHandlerContext>().ignoreIv) {
 		const auto my = context.value<ClickHandlerContext>();

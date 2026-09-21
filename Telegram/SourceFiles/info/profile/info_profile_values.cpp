@@ -11,6 +11,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "apiwrap.h"
 #include "info/profile/info_profile_phone_menu.h"
 #include "info/profile/info_profile_badge.h"
+#include "margy/margy_config.h"
+#include "margy/streamer/margy_streamer.h"
 #include "core/application.h"
 #include "core/click_handler_types.h"
 #include "countries/countries_instance.h"
@@ -131,7 +133,10 @@ rpl::producer<TextWithEntities> PhoneValue(not_null<UserData*> user) {
 			user,
 			UpdateFlag::PhoneNumber) | rpl::to_empty
 	) | rpl::map([=] {
-		return tr::marked(Ui::FormatPhone(user->phone()));
+		const auto formatted = Ui::FormatPhone(user->phone());
+		return tr::marked(Margy::StreamerMode()
+			? Margy::Streamer::MaskPhone(formatted)
+			: formatted);
 	});
 }
 
@@ -186,10 +191,14 @@ rpl::producer<TextWithEntities> UsernameValue(
 	return (primary
 		? PlainPrimaryUsernameValue(peer)
 		: (PlainUsernameValue(peer) | rpl::type_erased)
-	) | rpl::map([](QString &&username) {
-		return username.isEmpty()
-			? tr::marked()
-			: tr::marked('@' + username);
+	) | rpl::map([=](QString &&username) {
+		if (username.isEmpty()) {
+			return tr::marked();
+		}
+		if (Margy::StreamerMode() && Margy::Streamer::ShouldHideUsername(peer->isSelf())) {
+			return tr::marked(u"@•••••••"_q);
+		}
+		return tr::marked('@' + username);
 	});
 }
 

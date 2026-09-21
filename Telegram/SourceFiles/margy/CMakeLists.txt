@@ -11,6 +11,26 @@ target_sources(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_plane_3d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_box.h
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_gallery_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_gallery_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/settings/margy_settings_section.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/settings/margy_settings_section.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/profile/margy_profile_id.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/profile/margy_profile_id.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/streamer/margy_streamer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/streamer/margy_streamer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sound/margy_meow.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sound/margy_meow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cats/margy_cats_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cats/margy_cats_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cats/margy_cats_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cats/margy_cats_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tags/margy_audio_tags.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tags/margy_audio_tags.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tags/margy_audio_tags_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tags/margy_audio_tags_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheme/margy_scheme.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheme/margy_scheme.cpp
 )
 
 target_include_directories(Telegram PRIVATE

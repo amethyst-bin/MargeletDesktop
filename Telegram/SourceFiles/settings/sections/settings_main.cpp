@@ -59,6 +59,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/sections/settings_premium.h"
 #include "settings/sections/settings_privacy_security.h"
 #include "settings/settings_scale_preview.h"
+#include "margy/settings/margy_settings_section.h"
 #include "storage/localstorage.h"
 #include "ui/basic_click_handlers.h"
 #include "ui/boxes/confirm_box.h"
@@ -434,6 +435,13 @@ void BuildSectionButtons(SectionBuilder &builder) {
 		.targetSection = AdvancedId(),
 		.icon = { &st::menuIconManage },
 		.keywords = { u"performance"_q, u"proxy"_q, u"experimental"_q },
+	});
+
+	builder.addSectionButton({
+		.title = rpl::single(u"Настройки Margy"_q),
+		.targetSection = ::Margy::Settings::MargySettingsId(),
+		.icon = { &st::menuIconManage },
+		.keywords = { u"margy"_q, u"margelet"_q, u"badges"_q, u"cats"_q },
 	});
 
 	builder.addSectionButton({
