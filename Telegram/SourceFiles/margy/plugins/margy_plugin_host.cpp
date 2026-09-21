@@ -152,7 +152,6 @@ void Host::sendCommand(const QString &jsonLine) {
 	if (_process && _running && _process->state() == QProcess::Running) {
 		const auto data = jsonLine.toUtf8() + '\n';
 		_process->write(data);
-		_process->flush();
 	}
 }
 
