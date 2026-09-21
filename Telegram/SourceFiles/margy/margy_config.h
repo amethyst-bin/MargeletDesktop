@@ -68,6 +68,24 @@ public:
 	[[nodiscard]] bool freeEmoji() const { return _freeEmoji; }
 	void setFreeEmoji(bool enabled);
 
+	[[nodiscard]] bool pluginsEnabled() const { return _pluginsEnabled; }
+	void setPluginsEnabled(bool enabled);
+
+	[[nodiscard]] bool pluginHooksEnabled() const { return _pluginHooksEnabled; }
+	void setPluginHooksEnabled(bool enabled);
+
+	[[nodiscard]] bool isPluginEnabled(const QString &pluginId) const;
+	void setPluginEnabled(const QString &pluginId, bool enabled);
+
+	[[nodiscard]] QString pluginPref(
+		const QString &pluginId,
+		const QString &key,
+		const QString &fallback = QString()) const;
+	void setPluginPref(
+		const QString &pluginId,
+		const QString &key,
+		const QString &value);
+
 	[[nodiscard]] QString version() const;
 
 private:
@@ -97,6 +115,8 @@ private:
 	bool _ownBubblesGradient = false;
 	bool _hideAllChatsTab = false;
 	bool _freeEmoji = true;
+	bool _pluginsEnabled = true;
+	bool _pluginHooksEnabled = true;
 };
 
 [[nodiscard]] inline bool BadgesEnabled() {
@@ -165,6 +185,14 @@ private:
 
 [[nodiscard]] inline bool PinChannelFirst() {
 	return Config::Instance().pinChannelFirst();
+}
+
+[[nodiscard]] inline bool PluginsEnabled() {
+	return Config::Instance().pluginsEnabled();
+}
+
+[[nodiscard]] inline bool PluginHooksEnabled() {
+	return Config::Instance().pluginHooksEnabled();
 }
 
 } // namespace Margy

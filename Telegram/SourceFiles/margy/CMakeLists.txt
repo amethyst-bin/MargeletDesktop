@@ -45,6 +45,22 @@ target_sources(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/donate/margy_donate_box.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/proxy/margy_proxy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/proxy/margy_proxy.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_types.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_host_script.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_host.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_host.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_hooks.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_hooks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_typing_overlay.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_typing_overlay.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugins_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugins_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_settings_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_settings_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_console_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_console_box.cpp
 )
 
 target_include_directories(Telegram PRIVATE

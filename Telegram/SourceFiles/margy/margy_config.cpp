@@ -172,6 +172,46 @@ void Config::setFreeEmoji(bool enabled) {
 	}
 }
 
+void Config::setPluginsEnabled(bool enabled) {
+	if (_pluginsEnabled != enabled) {
+		_pluginsEnabled = enabled;
+		save();
+	}
+}
+
+void Config::setPluginHooksEnabled(bool enabled) {
+	if (_pluginHooksEnabled != enabled) {
+		_pluginHooksEnabled = enabled;
+		save();
+	}
+}
+
+bool Config::isPluginEnabled(const QString &pluginId) const {
+	QSettings settings(SettingsFilePath(), QSettings::IniFormat);
+	return settings.value("plugins_enabled/" + pluginId, true).toBool();
+}
+
+void Config::setPluginEnabled(const QString &pluginId, bool enabled) {
+	QSettings settings(SettingsFilePath(), QSettings::IniFormat);
+	settings.setValue("plugins_enabled/" + pluginId, enabled);
+}
+
+QString Config::pluginPref(
+		const QString &pluginId,
+		const QString &key,
+		const QString &fallback) const {
+	QSettings settings(SettingsFilePath(), QSettings::IniFormat);
+	return settings.value("plugins_prefs/" + pluginId + '/' + key, fallback).toString();
+}
+
+void Config::setPluginPref(
+		const QString &pluginId,
+		const QString &key,
+		const QString &value) {
+	QSettings settings(SettingsFilePath(), QSettings::IniFormat);
+	settings.setValue("plugins_prefs/" + pluginId + '/' + key, value);
+}
+
 void Config::load() {
 	QSettings settings(SettingsFilePath(), QSettings::IniFormat);
 	_badgesEnabled = settings.value("badges/enabled", true).toBool();
@@ -194,6 +234,8 @@ void Config::load() {
 	_ownBubblesGradient = settings.value("chat/own_bubbles_gradient", false).toBool();
 	_hideAllChatsTab = settings.value("chat/hide_all_chats_tab", false).toBool();
 	_freeEmoji = settings.value("general/free_emoji", true).toBool();
+	_pluginsEnabled = settings.value("plugins/enabled", true).toBool();
+	_pluginHooksEnabled = settings.value("plugins/hooks_enabled", true).toBool();
 }
 
 void Config::save() {
@@ -218,6 +260,8 @@ void Config::save() {
 	settings.setValue("chat/own_bubbles_gradient", _ownBubblesGradient);
 	settings.setValue("chat/hide_all_chats_tab", _hideAllChatsTab);
 	settings.setValue("general/free_emoji", _freeEmoji);
+	settings.setValue("plugins/enabled", _pluginsEnabled);
+	settings.setValue("plugins/hooks_enabled", _pluginHooksEnabled);
 }
 
 } // namespace Margy

@@ -6,6 +6,8 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "chat_helpers/message_field.h"
+#include "margy/plugins/margy_typing_overlay.h"
+#include "margy/plugins/margy_plugin_hooks.h"
 
 #include "history/history_widget.h"
 #include "history/history.h" // History::session
@@ -725,6 +727,23 @@ std::shared_ptr<Ui::ChatStyle> InitMessageField(
 		.allowPremiumEmoji = std::move(allowPremiumEmoji),
 	});
 	InitMessageFieldGeometry(field);
+	Margy::Plugins::TypingOverlay::Attach(field, u"message_field"_q);
+	const auto prevText = std::make_shared<QString>(field->getTextWithTags().text);
+	field->changes(
+	) | rpl::on_next([=] {
+		const auto text = field->getTextWithTags().text;
+		const auto fm = field->fontMetrics();
+		Margy::Plugins::Hooks::OnInputTextChanged(
+			u"message_field"_q,
+			text,
+			*prevText,
+			field->textCursor().position(),
+			float(fm.horizontalAdvance('a')),
+			float(fm.height()),
+			field->geometry().left(),
+			field->geometry().top());
+		*prevText = text;
+	}, field->lifetime());
 	return style;
 }
 

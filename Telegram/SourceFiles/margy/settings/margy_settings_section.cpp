@@ -11,6 +11,8 @@
 #include "margy/proxy/margy_proxy.h"
 #include "margy/seizure/margy_seizure.h"
 #include "margy/gifts/margy_gifts.h"
+#include "margy/plugins/ui/margy_plugins_box.h"
+#include "margy/plugins/ui/margy_plugin_console_box.h"
 
 #include "ui/vertical_list.h"
 #include "ui/widgets/checkbox.h"
@@ -287,6 +289,55 @@ void MargySettingsSection::setupContent() {
 	) | rpl::on_next([=](bool checked) {
 		Config::Instance().setHideAllChatsTab(checked);
 	}, content->lifetime());
+
+	// Plugins
+	Ui::AddSkip(content);
+	Ui::AddDivider(content);
+	Ui::AddSubsectionTitle(content, rpl::single(u"Плагины Margelet"_q));
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Включить систему плагинов Python (.marp)"_q,
+			Config::Instance().pluginsEnabled(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setPluginsEnabled(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Разрешить хуки методов (Method hooks)"_q,
+			Config::Instance().pluginHooksEnabled(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setPluginHooksEnabled(checked);
+	}, content->lifetime());
+
+	const auto pluginsBtn = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			rpl::single(u"Управление плагинами (.marp)"_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	pluginsBtn->setClickedCallback([=] {
+		Plugins::UI::PluginsBox::Show(this);
+	});
+
+	const auto pluginConsoleBtn = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			rpl::single(u"Консоль плагинов"_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	pluginConsoleBtn->setClickedCallback([=] {
+		Plugins::UI::PluginConsoleBox::Show(this);
+	});
 
 	// Proxy
 	Ui::AddSkip(content);
