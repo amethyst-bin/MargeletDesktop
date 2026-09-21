@@ -7,6 +7,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QPixmap>
+#include <QFile>
 #include <QTimer>
 
 namespace Margy::Cats {
@@ -77,7 +78,7 @@ void CatsBox::showCat(const Cat &cat) {
 
 	const auto localPath = CatsManager::Instance().localPhotoPath(cat);
 	if (!localPath.isEmpty() && QFile::exists(localPath)) {
-		QPixmap pixmap(localPath);
+		auto pixmap = QPixmap(localPath);
 		if (!pixmap.isNull()) {
 			_photoLabel->setPixmap(pixmap.scaled(
 				_photoLabel->size(),
@@ -94,7 +95,7 @@ void CatsBox::showCat(const Cat &cat) {
 		if (_currentCat.photo == cat.photo) {
 			const auto retryPath = CatsManager::Instance().localPhotoPath(cat);
 			if (!retryPath.isEmpty() && QFile::exists(retryPath)) {
-				QPixmap retryPix(retryPath);
+				auto retryPix = QPixmap(retryPath);
 				if (!retryPix.isNull()) {
 					_photoLabel->setPixmap(retryPix.scaled(
 						_photoLabel->size(),

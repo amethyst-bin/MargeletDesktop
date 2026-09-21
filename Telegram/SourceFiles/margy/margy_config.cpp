@@ -31,6 +31,10 @@ QString Config::version() const {
 	return "0.1.0-alpha";
 }
 
+QString Config::settingsFilePath() const {
+	return SettingsFilePath();
+}
+
 void Config::setBadgesEnabled(bool enabled) {
 	if (_badgesEnabled != enabled) {
 		_badgesEnabled = enabled;

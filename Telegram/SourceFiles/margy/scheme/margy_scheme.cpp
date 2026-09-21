@@ -24,7 +24,6 @@ bool HandleUrl(const QString &url, const QVariant &context) {
 		return false;
 	}
 
-	const auto command = url.mid(u"margy://"_q.size()).trimmed();
 	const auto parsedUrl = QUrl(url);
 	const auto host = parsedUrl.host().toLower();
 	const auto path = parsedUrl.path().toLower();

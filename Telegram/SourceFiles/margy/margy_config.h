@@ -87,6 +87,7 @@ public:
 		const QString &value);
 
 	[[nodiscard]] QString version() const;
+	[[nodiscard]] QString settingsFilePath() const;
 
 private:
 	Config();

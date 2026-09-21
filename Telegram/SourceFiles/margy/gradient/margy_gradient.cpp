@@ -39,7 +39,7 @@ QString Format(const QColor &first, const QColor &second) {
 		.arg(second.name().mid(1).toUpper());
 }
 
-Colors ForPeer(int64_t peerId) {
+Colors ForPeer(int64_t) {
 	if (Config::Instance().profileGradientEnabled()) {
 		const auto parsed = Parse(Config::Instance().profileGradient());
 		if (parsed.valid) {
@@ -53,7 +53,7 @@ void Paint(QPainter &p, const QRect &rect, const Colors &colors) {
 	if (!colors.valid) {
 		return;
 	}
-	QLinearGradient grad(rect.topLeft(), rect.bottomRight());
+	auto grad = QLinearGradient(rect.topLeft(), rect.bottomRight());
 	grad.setColorAt(0.0, colors.first);
 	grad.setColorAt(1.0, colors.second);
 	p.fillRect(rect, grad);

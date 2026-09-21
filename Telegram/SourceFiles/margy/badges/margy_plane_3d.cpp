@@ -19,9 +19,9 @@ constexpr int kCornerSteps = 8;
 constexpr float kCamZ = 3.4f;
 constexpr float kTilt = -10.0f;
 
-const QColor kWingLeft(0xFF, 0xFF, 0xFF);
-const QColor kWingRight(0xEE, 0xF3, 0xFA);
-const QColor kKeel(0xCC, 0xD5, 0xE9);
+const auto kWingLeft = QColor(0xFF, 0xFF, 0xFF);
+const auto kWingRight = QColor(0xEE, 0xF3, 0xFA);
+const auto kKeel = QColor(0xCC, 0xD5, 0xE9);
 
 std::array<float, 3> Normalize(float x, float y, float z) {
 	const float len = std::sqrt(x * x + y * y + z * z);

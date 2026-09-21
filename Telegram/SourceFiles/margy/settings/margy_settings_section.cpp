@@ -45,7 +45,7 @@ void MargySettingsSection::setupContent() {
 	// 3D Header Widget
 	const auto planeWrap = content->add(
 		object_ptr<Ui::FixedHeightWidget>(content, 150));
-	const auto plane = Ui::CreateChild<Badges::Plane3D>(planeWrap, Badges::BadgeType::Margy);
+	const auto plane = Ui::CreateChild<Badges::Plane3D>(planeWrap, QColor(0x8D, 0xD1, 0xB0));
 	plane->resize(150, 150);
 	planeWrap->widthValue(
 	) | rpl::on_next([=](int w) {

@@ -345,15 +345,15 @@ rpl::producer<TypingAnimFrame> Host::typingAnimation(const QString &fieldId) {
 
 bool Host::unpackArchive(const QString &archivePath, const QString &targetDir) {
 	const auto pythonPath = findPython();
-	const auto cmd = std::vector<QString>{
+	const auto args = QStringList{
 		u"-m"_q,
 		u"zipfile"_q,
 		u"-e"_q,
 		archivePath,
 		targetDir,
 	};
-	QProcess proc;
-	proc.start(pythonPath, { cmd.begin(), cmd.end() });
+	auto proc = QProcess();
+	proc.start(pythonPath, args);
 	return proc.waitForFinished(5000) && (proc.exitCode() == 0);
 }
 

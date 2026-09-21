@@ -8,6 +8,7 @@
 
 #include <QtWidgets/QPlainTextEdit>
 #include <QtWidgets/QApplication>
+#include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 #include <QtCore/QDateTime>
 

@@ -82,7 +82,7 @@ void TypingOverlay::paintEvent(QPaintEvent *e) {
 		if (alpha <= 0.001f) {
 			continue;
 		}
-		QColor color(QRgb(spark.color));
+		auto color = QColor::fromRgba(QRgb(spark.color));
 		color.setAlphaF(alpha);
 		p.setPen(Qt::NoPen);
 		p.setBrush(color);

@@ -96,7 +96,7 @@ std::vector<Badge> Manager::list() const {
 }
 
 void Manager::loadCache() {
-	QFile file(CacheFilePath());
+	auto file = QFile(CacheFilePath());
 	if (file.open(QIODevice::ReadOnly)) {
 		const auto bytes = file.readAll();
 		if (parseJson(bytes)) {
@@ -107,7 +107,7 @@ void Manager::loadCache() {
 }
 
 void Manager::saveCache(const QByteArray &bytes) {
-	QFile file(CacheFilePath());
+	auto file = QFile(CacheFilePath());
 	if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
 		file.write(bytes);
 	}
@@ -156,10 +156,10 @@ bool Manager::parseJson(const QByteArray &bytes) {
 }
 
 void Manager::refresh() {
-	QNetworkRequest request(QUrl(kRemoteBadgesUrl));
+	auto request = QNetworkRequest(QUrl(kRemoteBadgesUrl));
 	request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 
-	auto *reply = _network->get(request);
+	const auto reply = _network->get(request);
 	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
 		reply->deleteLater();
 		if (reply->error() != QNetworkReply::NoError) {

@@ -43,7 +43,7 @@ void BadgeGalleryBox::setupUi() {
 	listLayout->setContentsMargins(0, 0, 0, 0);
 	listLayout->setSpacing(8);
 
-	const auto &badges = Manager::Instance().badges();
+	const auto badges = Manager::Instance().list();
 	for (const auto &badge : badges) {
 		const auto row = new QWidget(container);
 		row->setStyleSheet(
@@ -53,17 +53,17 @@ void BadgeGalleryBox::setupUi() {
 
 		const auto iconLabel = new QLabel(row);
 		iconLabel->setFixedSize(24, 24);
-		iconLabel->setPixmap(RenderBadgeIcon(badge.type, 24));
+		iconLabel->setPixmap(GenerateBadgeIcon(badge.color, 24));
 		rowLayout->addWidget(iconLabel);
 
 		const auto infoLayout = new QVBoxLayout();
 		infoLayout->setSpacing(2);
 
-		const auto nameLabel = new QLabel(badge.name, row);
+		const auto nameLabel = new QLabel(badge.title(), row);
 		nameLabel->setStyleSheet(u"font-size: 14px; font-weight: bold; color: white;"_q);
 		infoLayout->addWidget(nameLabel);
 
-		const auto roleLabel = new QLabel(badge.role, row);
+		const auto roleLabel = new QLabel(badge.about(), row);
 		roleLabel->setStyleSheet(u"font-size: 12px; color: #a0a0a0;"_q);
 		infoLayout->addWidget(roleLabel);
 

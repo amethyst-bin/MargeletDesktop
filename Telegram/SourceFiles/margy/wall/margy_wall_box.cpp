@@ -88,7 +88,7 @@ void WallBox::setupUi() {
 
 void WallBox::loadPosts() {
 	_postsList->clear();
-	QSettings s(Config::Instance().settingsFilePath(), QSettings::IniFormat);
+	auto s = QSettings(Config::Instance().settingsFilePath(), QSettings::IniFormat);
 	s.beginGroup(WallSettingsKey(_peerId));
 	const auto count = s.value(u"count"_q, 0).toInt();
 
@@ -97,14 +97,12 @@ void WallBox::loadPosts() {
 		item->setText(
 			u"🐾 Margy Bot\n"
 			u"Добро пожаловать на Стену! Здесь можно делиться записями и памятными событиями."_q);
-		_postsList->addItem(item);
 	} else {
 		for (auto i = 0; i < count; ++i) {
 			const auto text = s.value(QString(u"post_%1"_q).arg(i)).toString();
 			const auto date = s.value(QString(u"date_%1"_q).arg(i)).toString();
 			const auto item = new QListWidgetItem(_postsList);
 			item->setText(QString(u"📅 %1\n%2"_q).arg(date, text));
-			_postsList->addItem(item);
 		}
 	}
 	s.endGroup();
@@ -112,7 +110,7 @@ void WallBox::loadPosts() {
 }
 
 void WallBox::addPost(const QString &text) {
-	QSettings s(Config::Instance().settingsFilePath(), QSettings::IniFormat);
+	auto s = QSettings(Config::Instance().settingsFilePath(), QSettings::IniFormat);
 	s.beginGroup(WallSettingsKey(_peerId));
 	auto count = s.value(u"count"_q, 0).toInt();
 	const auto nowStr = QDateTime::currentDateTime().toString(u"dd.MM.yyyy hh:mm"_q);
@@ -124,7 +122,6 @@ void WallBox::addPost(const QString &text) {
 
 	const auto item = new QListWidgetItem(_postsList);
 	item->setText(QString(u"📅 %1 (Вы)\n%2"_q).arg(nowStr, text));
-	_postsList->addItem(item);
 	_postsList->scrollToBottom();
 }
 

@@ -52,7 +52,7 @@ CatsManager::CatsManager() {
 }
 
 void CatsManager::loadCached() {
-	QFile file(CatsJsonCachePath());
+	auto file = QFile(CatsJsonCachePath());
 	if (file.open(QIODevice::ReadOnly)) {
 		parseJson(file.readAll());
 	}
@@ -97,7 +97,7 @@ void CatsManager::fetchRemote() {
 		if (reply->error() == QNetworkReply::NoError) {
 			const auto data = reply->readAll();
 			parseJson(data);
-			QFile cache(CatsJsonCachePath());
+			auto cache = QFile(CatsJsonCachePath());
 			if (cache.open(QIODevice::WriteOnly)) {
 				cache.write(data);
 			}
@@ -118,7 +118,8 @@ Cat CatsManager::randomCat() const {
 		return Cat{
 			.photo = u"res/margelet_cat_9.jpg"_q,
 			.name = u"Клёпа :3"_q,
-			.from = u"@ynhur"_q,
+			.nameRu = u"Клёпа :3"_q,
+			.from = u"@narezany"_q,
 		};
 	}
 	const auto idx = QRandomGenerator::global()->bounded(int(_cats.size()));
@@ -140,7 +141,7 @@ QString CatsManager::localPhotoPath(const Cat &cat) const {
 		reply->deleteLater();
 		nam->deleteLater();
 		if (reply->error() == QNetworkReply::NoError) {
-			QFile file(localPath);
+			auto file = QFile(localPath);
 			if (file.open(QIODevice::WriteOnly)) {
 				file.write(reply->readAll());
 			}
