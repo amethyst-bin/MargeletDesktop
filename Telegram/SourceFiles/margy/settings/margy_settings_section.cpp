@@ -4,6 +4,13 @@
 #include "margy/badges/margy_badge_gallery_box.h"
 #include "margy/cats/margy_cats_box.h"
 #include "margy/sound/margy_meow.h"
+#include "margy/fonts/margy_fonts.h"
+#include "margy/gradient/margy_gradient.h"
+#include "margy/wall/margy_wall_box.h"
+#include "margy/donate/margy_donate_box.h"
+#include "margy/proxy/margy_proxy.h"
+#include "margy/seizure/margy_seizure.h"
+#include "margy/gifts/margy_gifts.h"
 
 #include "ui/vertical_list.h"
 #include "ui/widgets/checkbox.h"
@@ -176,6 +183,96 @@ void MargySettingsSection::setupContent() {
 		Cats::CatsBox::Show(this);
 	});
 
+	// Appearance & Fonts
+	Ui::AddSkip(content);
+	Ui::AddDivider(content);
+	Ui::AddSubsectionTitle(content, rpl::single(u"Внешний вид и шрифты"_q));
+
+	const auto fontsBtn = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			rpl::single(u"Шрифты интерфейса и эмодзи (Twemoji)..."_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	fontsBtn->setClickedCallback([=] {
+		Fonts::FontsBox::Show(this);
+	});
+
+	const auto gradBtn = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			rpl::single(u"Двухцветный градиент профиля..."_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	gradBtn->setClickedCallback([=] {
+		Gradient::GradientBox::Show(this);
+	});
+
+	// Wall
+	Ui::AddSkip(content);
+	Ui::AddDivider(content);
+	Ui::AddSubsectionTitle(content, rpl::single(u"Стена Margy"_q));
+
+	const auto wallBtn = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			rpl::single(u"Открыть стену профиля 📝"_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	wallBtn->setClickedCallback([=] {
+		Wall::WallBox::Show(this);
+	});
+
+	// Gifts and Channels
+	Ui::AddSkip(content);
+	Ui::AddDivider(content);
+	Ui::AddSubsectionTitle(content, rpl::single(u"Подарки и возможности"_q));
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Показывать скрытые подарки (Star Gifts)"_q,
+			Config::Instance().unhideGifts(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setUnhideGifts(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Закреплять каналы первыми"_q,
+			Config::Instance().pinChannelFirst(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setPinChannelFirst(checked);
+	}, content->lifetime());
+
+	// Proxy
+	Ui::AddSkip(content);
+	Ui::AddDivider(content);
+	Ui::AddSubsectionTitle(content, rpl::single(u"Сеть и прокси"_q));
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Встроенный MTProxy сообщества Margy"_q,
+			Proxy::IsCommunityProxyActive(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		if (checked) {
+			Proxy::ConnectCommunityProxy();
+		} else {
+			Proxy::DisconnectCommunityProxy();
+		}
+	}, content->lifetime());
+
 	// Sound (Easter egg)
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
@@ -192,6 +289,18 @@ void MargySettingsSection::setupContent() {
 		Config::Instance().setMeowEnabled(checked);
 	}, content->lifetime());
 
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Пасхалка: режим «Приступ» (радужные цвета)"_q,
+			Config::Instance().seizureMode(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setSeizureMode(checked);
+	}, content->lifetime());
+
 	const auto testSoundBtn = content->add(
 		object_ptr<Ui::SettingsButton>(
 			content,
@@ -200,6 +309,21 @@ void MargySettingsSection::setupContent() {
 		st::settingsSendTypePadding);
 	testSoundBtn->setClickedCallback([=] {
 		Sound::PlayMeow();
+	});
+
+	// Support & Donate
+	Ui::AddSkip(content);
+	Ui::AddDivider(content);
+	Ui::AddSubsectionTitle(content, rpl::single(u"Поддержка проекта"_q));
+
+	const auto donateBtn = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			rpl::single(u"Поддержать развитие Margy (Донат) 💖"_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	donateBtn->setClickedCallback([=] {
+		Donate::DonateBox::Show(this);
 	});
 
 	// Community & Links

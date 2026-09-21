@@ -31,6 +31,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/proxy_rotation_manager.h"
 #include "core/ui_integration.h"
 #include "core/version.h"
+#include "margy/fonts/margy_fonts.h"
 #include "chat_helpers/emoji_keywords.h"
 #include "chat_helpers/stickers_emoji_image_loader.h"
 #include "base/platform/base_platform_global_shortcuts.h"
@@ -186,6 +187,7 @@ Application::Application()
 	_private->proxyRotation = std::make_unique<ProxyRotationManager>();
 
 	_platformIntegration->init();
+	Margy::Fonts::ApplyConfiguredFonts();
 
 	passcodeLockChanges(
 	) | rpl::on_next([=](bool locked) {

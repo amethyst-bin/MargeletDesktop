@@ -31,6 +31,20 @@ target_sources(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tags/margy_audio_tags_box.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheme/margy_scheme.h
     ${CMAKE_CURRENT_SOURCE_DIR}/scheme/margy_scheme.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/fonts/margy_fonts.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/fonts/margy_fonts.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gradient/margy_gradient.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gradient/margy_gradient.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wall/margy_wall_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wall/margy_wall_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gifts/margy_gifts.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gifts/margy_gifts.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/seizure/margy_seizure.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/seizure/margy_seizure.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/donate/margy_donate_box.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/donate/margy_donate_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/proxy/margy_proxy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/proxy/margy_proxy.cpp
 )
 
 target_include_directories(Telegram PRIVATE

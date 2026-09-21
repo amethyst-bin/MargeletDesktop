@@ -38,6 +38,27 @@ public:
 	[[nodiscard]] bool bubblesOutline() const { return _bubblesOutline; }
 	void setBubblesOutline(bool enabled);
 
+	[[nodiscard]] QString customFont() const { return _customFont; }
+	void setCustomFont(const QString &font);
+
+	[[nodiscard]] QString emojiFont() const { return _emojiFont; }
+	void setEmojiFont(const QString &font);
+
+	[[nodiscard]] QString profileGradient() const { return _profileGradient; }
+	void setProfileGradient(const QString &gradient);
+
+	[[nodiscard]] bool profileGradientEnabled() const { return _profileGradientEnabled; }
+	void setProfileGradientEnabled(bool enabled);
+
+	[[nodiscard]] bool unhideGifts() const { return _unhideGifts; }
+	void setUnhideGifts(bool enabled);
+
+	[[nodiscard]] bool seizureMode() const { return _seizureMode; }
+	void setSeizureMode(bool enabled);
+
+	[[nodiscard]] bool pinChannelFirst() const { return _pinChannelFirst; }
+	void setPinChannelFirst(bool enabled);
+
 	[[nodiscard]] QString version() const;
 
 private:
@@ -57,6 +78,13 @@ private:
 	bool _meowHeard = false;
 	bool _tagsEnabled = true;
 	bool _bubblesOutline = false;
+	QString _customFont;
+	QString _emojiFont = "Default";
+	QString _profileGradient = "#8DD1B0-#B7A8E0";
+	bool _profileGradientEnabled = false;
+	bool _unhideGifts = true;
+	bool _seizureMode = false;
+	bool _pinChannelFirst = true;
 };
 
 [[nodiscard]] inline bool BadgesEnabled() {
@@ -97,6 +125,34 @@ private:
 
 [[nodiscard]] inline bool BubblesOutline() {
 	return Config::Instance().bubblesOutline();
+}
+
+[[nodiscard]] inline QString CustomFont() {
+	return Config::Instance().customFont();
+}
+
+[[nodiscard]] inline QString EmojiFont() {
+	return Config::Instance().emojiFont();
+}
+
+[[nodiscard]] inline QString ProfileGradient() {
+	return Config::Instance().profileGradient();
+}
+
+[[nodiscard]] inline bool ProfileGradientEnabled() {
+	return Config::Instance().profileGradientEnabled();
+}
+
+[[nodiscard]] inline bool UnhideGifts() {
+	return Config::Instance().unhideGifts();
+}
+
+[[nodiscard]] inline bool SeizureMode() {
+	return Config::Instance().seizureMode();
+}
+
+[[nodiscard]] inline bool PinChannelFirst() {
+	return Config::Instance().pinChannelFirst();
 }
 
 } // namespace Margy

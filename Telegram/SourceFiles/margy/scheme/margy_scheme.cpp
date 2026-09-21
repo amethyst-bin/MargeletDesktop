@@ -3,6 +3,11 @@
 #include "margy/badges/margy_badge_gallery_box.h"
 #include "margy/badges/margy_badge_box.h"
 #include "margy/cats/margy_cats_box.h"
+#include "margy/fonts/margy_fonts.h"
+#include "margy/gradient/margy_gradient.h"
+#include "margy/wall/margy_wall_box.h"
+#include "margy/donate/margy_donate_box.h"
+#include "margy/proxy/margy_proxy.h"
 #include "core/application.h"
 #include "core/click_handler_types.h"
 #include "window/window_session_controller.h"
@@ -51,6 +56,24 @@ bool HandleUrl(const QString &url, const QVariant &context) {
 		}
 	} else if (target == u"cats"_q) {
 		Cats::CatsBox::Show(window);
+		return true;
+	} else if (target == u"fonts"_q) {
+		Fonts::FontsBox::Show(window);
+		return true;
+	} else if (target == u"gradient"_q) {
+		Gradient::GradientBox::Show(window);
+		return true;
+	} else if (target == u"wall"_q) {
+		const auto query = QUrlQuery(parsedUrl.query());
+		const auto peerStr = query.queryItemValue(u"peer"_q);
+		const auto peerId = peerStr.isEmpty() ? 0 : peerStr.toLongLong();
+		Wall::WallBox::Show(window, peerId);
+		return true;
+	} else if (target == u"donate"_q) {
+		Donate::DonateBox::Show(window);
+		return true;
+	} else if (target == u"proxy"_q) {
+		Proxy::ConnectCommunityProxy();
 		return true;
 	} else if (target == u"channel"_q) {
 		QDesktopServices::openUrl(QUrl(u"https://t.me/margeletter"_q));

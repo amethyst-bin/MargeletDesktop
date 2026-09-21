@@ -102,6 +102,55 @@ void Config::setBubblesOutline(bool enabled) {
 	}
 }
 
+void Config::setCustomFont(const QString &font) {
+	if (_customFont != font) {
+		_customFont = font;
+		save();
+	}
+}
+
+void Config::setEmojiFont(const QString &font) {
+	if (_emojiFont != font) {
+		_emojiFont = font;
+		save();
+	}
+}
+
+void Config::setProfileGradient(const QString &gradient) {
+	if (_profileGradient != gradient) {
+		_profileGradient = gradient;
+		save();
+	}
+}
+
+void Config::setProfileGradientEnabled(bool enabled) {
+	if (_profileGradientEnabled != enabled) {
+		_profileGradientEnabled = enabled;
+		save();
+	}
+}
+
+void Config::setUnhideGifts(bool enabled) {
+	if (_unhideGifts != enabled) {
+		_unhideGifts = enabled;
+		save();
+	}
+}
+
+void Config::setSeizureMode(bool enabled) {
+	if (_seizureMode != enabled) {
+		_seizureMode = enabled;
+		save();
+	}
+}
+
+void Config::setPinChannelFirst(bool enabled) {
+	if (_pinChannelFirst != enabled) {
+		_pinChannelFirst = enabled;
+		save();
+	}
+}
+
 void Config::load() {
 	QSettings settings(SettingsFilePath(), QSettings::IniFormat);
 	_badgesEnabled = settings.value("badges/enabled", true).toBool();
@@ -114,6 +163,13 @@ void Config::load() {
 	_meowHeard = settings.value("sound/meow_heard", false).toBool();
 	_tagsEnabled = settings.value("tags/enabled", true).toBool();
 	_bubblesOutline = settings.value("appearance/bubbles_outline", false).toBool();
+	_customFont = settings.value("appearance/custom_font", QString()).toString();
+	_emojiFont = settings.value("appearance/emoji_font", "Default").toString();
+	_profileGradient = settings.value("profile/gradient", "#8DD1B0-#B7A8E0").toString();
+	_profileGradientEnabled = settings.value("profile/gradient_enabled", false).toBool();
+	_unhideGifts = settings.value("profile/unhide_gifts", true).toBool();
+	_seizureMode = settings.value("appearance/seizure_mode", false).toBool();
+	_pinChannelFirst = settings.value("general/pin_channel_first", true).toBool();
 }
 
 void Config::save() {
@@ -128,6 +184,13 @@ void Config::save() {
 	settings.setValue("sound/meow_heard", _meowHeard);
 	settings.setValue("tags/enabled", _tagsEnabled);
 	settings.setValue("appearance/bubbles_outline", _bubblesOutline);
+	settings.setValue("appearance/custom_font", _customFont);
+	settings.setValue("appearance/emoji_font", _emojiFont);
+	settings.setValue("profile/gradient", _profileGradient);
+	settings.setValue("profile/gradient_enabled", _profileGradientEnabled);
+	settings.setValue("profile/unhide_gifts", _unhideGifts);
+	settings.setValue("appearance/seizure_mode", _seizureMode);
+	settings.setValue("general/pin_channel_first", _pinChannelFirst);
 }
 
 } // namespace Margy

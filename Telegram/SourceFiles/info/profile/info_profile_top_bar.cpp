@@ -57,7 +57,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/profile/info_profile_top_bar_action_button.h"
 #include "info/profile/info_profile_values.h"
 #include "info/userpic/info_userpic_emoji_builder_common.h"
-#include "info/userpic/info_userpic_emoji_builder_common.h"
+#include "margy/gradient/margy_gradient.h"
 #include "info/userpic/info_userpic_emoji_builder_menu_item.h"
 #include "lang/lang_keys.h"
 #include "lottie/lottie_animation.h"
@@ -2870,6 +2870,11 @@ void TopBar::paintEvent(QPaintEvent *e) {
 	const auto geometry = userpicGeometry();
 	const auto clipBounds = e->region().boundingRect();
 
+	const auto margyGrad = Margy::Gradient::ForPeer(_peer ? _peer->id.value : 0);
+	if (margyGrad.valid) {
+		_hasGradientBg = true;
+	}
+
 	if (_hasGradientBg && _cachedGradient.isNull()) {
 		const auto collectible = effectiveCollectible();
 		const auto colorProfile = effectiveColorProfile();
@@ -2878,7 +2883,14 @@ void TopBar::paintEvent(QPaintEvent *e) {
 			_hasActions
 				? -st::infoProfileTopBarPhotoBgShift
 				: -st::infoProfileTopBarPhotoBgNoActionsShift);
-		if (collectible) {
+		if (margyGrad.valid) {
+			_cachedGradient = Ui::CreateTopBgGradient(
+				QSize(width(), maximumHeight()),
+				margyGrad.second,
+				margyGrad.first,
+				false,
+				offset);
+		} else if (collectible) {
 			_cachedGradient = Ui::CreateTopBgGradient(
 				QSize(width(), maximumHeight()),
 				collectible->centerColor,

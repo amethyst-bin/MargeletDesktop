@@ -43,6 +43,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "mtproto/sender.h"
 #include "window/window_session_controller.h"
+#include "margy/gifts/margy_gifts.h"
 #include "settings/settings_credits_graphics.h"
 #include "styles/style_info.h"
 #include "styles/style_layers.h" // boxRadius
@@ -660,7 +661,7 @@ void InnerWidget::loadMore() {
 			| (filter.skipUnlimited ? Flag::f_exclude_unlimited : Flag())
 			| (filter.skipUnique ? Flag::f_exclude_unique : Flag())
 			| (filter.skipSaved ? Flag::f_exclude_saved : Flag())
-			| (filter.skipUnsaved ? Flag::f_exclude_unsaved : Flag())
+			| ((filter.skipUnsaved && !Margy::Gifts::UnhideGiftsEnabled()) ? Flag::f_exclude_unsaved : Flag())
 			| (collectionId ? Flag::f_collection_id : Flag())),
 		_peer->input(),
 		MTP_int(collectionId),
