@@ -14,6 +14,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_channel.h"
 #include "data/data_session.h"
 #include "data/data_forum.h"
+#include "data/data_peer.h"
+#include "margy/margy_config.h"
 
 namespace Dialogs {
 
@@ -111,6 +113,15 @@ void PinnedList::applyList(
 				addPinned(history);
 			}
 		});
+	}
+	if (Margy::Config::Instance().pinChannelFirst()) {
+		std::stable_partition(_data.begin(), _data.end(), [](const Key &k) {
+			const auto p = k.peer();
+			return p && p->isChannel();
+		});
+		for (auto i = 0; i < int(_data.size()); ++i) {
+			_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
+		}
 	}
 }
 

@@ -1,4 +1,5 @@
 #include "margy/badges/margy_plane_3d.h"
+#include "margy/seizure/margy_seizure.h"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -282,7 +283,11 @@ void Plane3D::paintEvent(QPaintEvent *) {
 				continue; // Backface culling
 			}
 
-			const auto color = Shade(piece.color, nx, ny, nz);
+			auto baseColor = piece.color;
+			if (Margy::Seizure::IsEnabled() && piece.decal) {
+				baseColor = Margy::Seizure::CurrentColor();
+			}
+			const auto color = Shade(baseColor, nx, ny, nz);
 			p.setPen(QPen(color, 1.0f));
 			p.setBrush(color);
 			p.drawPolygon(polygon);
