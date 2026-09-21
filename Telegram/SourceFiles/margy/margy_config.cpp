@@ -151,6 +151,27 @@ void Config::setPinChannelFirst(bool enabled) {
 	}
 }
 
+void Config::setOwnBubblesGradient(bool enabled) {
+	if (_ownBubblesGradient != enabled) {
+		_ownBubblesGradient = enabled;
+		save();
+	}
+}
+
+void Config::setHideAllChatsTab(bool enabled) {
+	if (_hideAllChatsTab != enabled) {
+		_hideAllChatsTab = enabled;
+		save();
+	}
+}
+
+void Config::setFreeEmoji(bool enabled) {
+	if (_freeEmoji != enabled) {
+		_freeEmoji = enabled;
+		save();
+	}
+}
+
 void Config::load() {
 	QSettings settings(SettingsFilePath(), QSettings::IniFormat);
 	_badgesEnabled = settings.value("badges/enabled", true).toBool();
@@ -170,6 +191,9 @@ void Config::load() {
 	_unhideGifts = settings.value("profile/unhide_gifts", true).toBool();
 	_seizureMode = settings.value("appearance/seizure_mode", false).toBool();
 	_pinChannelFirst = settings.value("general/pin_channel_first", true).toBool();
+	_ownBubblesGradient = settings.value("chat/own_bubbles_gradient", false).toBool();
+	_hideAllChatsTab = settings.value("chat/hide_all_chats_tab", false).toBool();
+	_freeEmoji = settings.value("general/free_emoji", true).toBool();
 }
 
 void Config::save() {
@@ -191,6 +215,9 @@ void Config::save() {
 	settings.setValue("profile/unhide_gifts", _unhideGifts);
 	settings.setValue("appearance/seizure_mode", _seizureMode);
 	settings.setValue("general/pin_channel_first", _pinChannelFirst);
+	settings.setValue("chat/own_bubbles_gradient", _ownBubblesGradient);
+	settings.setValue("chat/hide_all_chats_tab", _hideAllChatsTab);
+	settings.setValue("general/free_emoji", _freeEmoji);
 }
 
 } // namespace Margy

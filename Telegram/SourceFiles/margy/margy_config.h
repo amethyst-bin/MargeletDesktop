@@ -59,6 +59,15 @@ public:
 	[[nodiscard]] bool pinChannelFirst() const { return _pinChannelFirst; }
 	void setPinChannelFirst(bool enabled);
 
+	[[nodiscard]] bool ownBubblesGradient() const { return _ownBubblesGradient; }
+	void setOwnBubblesGradient(bool enabled);
+
+	[[nodiscard]] bool hideAllChatsTab() const { return _hideAllChatsTab; }
+	void setHideAllChatsTab(bool enabled);
+
+	[[nodiscard]] bool freeEmoji() const { return _freeEmoji; }
+	void setFreeEmoji(bool enabled);
+
 	[[nodiscard]] QString version() const;
 
 private:
@@ -85,6 +94,9 @@ private:
 	bool _unhideGifts = true;
 	bool _seizureMode = false;
 	bool _pinChannelFirst = true;
+	bool _ownBubblesGradient = false;
+	bool _hideAllChatsTab = false;
+	bool _freeEmoji = true;
 };
 
 [[nodiscard]] inline bool BadgesEnabled() {

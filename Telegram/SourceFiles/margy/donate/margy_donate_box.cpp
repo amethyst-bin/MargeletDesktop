@@ -70,6 +70,15 @@ void DonateBox::setupUi() {
 		copyBtn->setText(u"Скопировано! ✓"_q);
 	});
 	yooRow->addWidget(copyBtn);
+
+	const auto openYooBtn = new QPushButton(u"Открыть форму"_q, yoomoneyCard);
+	openYooBtn->setStyleSheet(
+		u"background-color: #383842; color: #ffffff; border-radius: 6px; padding: 4px 10px;"_q);
+	connect(openYooBtn, &QPushButton::clicked, this, [] {
+		QDesktopServices::openUrl(QUrl(u"https://yoomoney.ru/to/4100118196133693"_q));
+	});
+	yooRow->addWidget(openYooBtn);
+
 	yooLayout->addLayout(yooRow);
 	layout->addWidget(yoomoneyCard);
 

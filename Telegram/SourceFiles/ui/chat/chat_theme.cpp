@@ -18,6 +18,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_custom_emoji.h"
 #include "ui/style/style_core_palette.h"
 #include "ui/style/style_palette_colorizer.h"
+#include "margy/margy_config.h"
+#include "margy/gradient/margy_gradient.h"
 
 #include <crl/crl_async.h>
 #include <QtGui/QGuiApplication>
@@ -319,6 +321,12 @@ void ChatTheme::adjustPalette(const ChatThemeDescriptor &descriptor) {
 	const auto overrideOutBg = (descriptor.bubblesData.colors.size() == 1);
 	if (overrideOutBg) {
 		set(p.msgOutBg(), descriptor.bubblesData.colors.front());
+	}
+	if (Margy::Config::Instance().ownBubblesGradient()) {
+		const auto grad = Margy::Gradient::ForPeer(0);
+		if (grad.valid) {
+			set(p.msgOutBg(), grad.first);
+		}
 	}
 	const auto &data = descriptor.backgroundData;
 	const auto &background = data.colors;

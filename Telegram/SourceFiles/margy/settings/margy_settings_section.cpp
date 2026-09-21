@@ -208,6 +208,18 @@ void MargySettingsSection::setupContent() {
 		Gradient::GradientBox::Show(this);
 	});
 
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Красить свои сообщения градиентом профиля"_q,
+			Config::Instance().ownBubblesGradient(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setOwnBubblesGradient(checked);
+	}, content->lifetime());
+
 	// Wall
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
@@ -243,6 +255,18 @@ void MargySettingsSection::setupContent() {
 	content->add(
 		object_ptr<Ui::Checkbox>(
 			content,
+			u"Премиум-значки для всех (видны в Margy)"_q,
+			Config::Instance().freeEmoji(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setFreeEmoji(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
 			u"Закреплять каналы первыми"_q,
 			Config::Instance().pinChannelFirst(),
 			st::settingsCheckbox),
@@ -250,6 +274,18 @@ void MargySettingsSection::setupContent() {
 	)->checkedChanges(
 	) | rpl::on_next([=](bool checked) {
 		Config::Instance().setPinChannelFirst(checked);
+	}, content->lifetime());
+
+	content->add(
+		object_ptr<Ui::Checkbox>(
+			content,
+			u"Скрывать папку «Все чаты»"_q,
+			Config::Instance().hideAllChatsTab(),
+			st::settingsCheckbox),
+		st::settingsSendTypePadding
+	)->checkedChanges(
+	) | rpl::on_next([=](bool checked) {
+		Config::Instance().setHideAllChatsTab(checked);
 	}, content->lifetime());
 
 	// Proxy
@@ -339,6 +375,16 @@ void MargySettingsSection::setupContent() {
 		st::settingsSendTypePadding);
 	channelBtn->setClickedCallback([] {
 		QDesktopServices::openUrl(QUrl(u"https://t.me/margeletter"_q));
+	});
+
+	const auto stickersBtn = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			rpl::single(u"Стикерпак Margelet (Telegram)"_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	stickersBtn->setClickedCallback([] {
+		QDesktopServices::openUrl(QUrl(u"https://t.me/addstickers/MargeletPackMargeletter"_q));
 	});
 
 	const auto forumBtn = content->add(
