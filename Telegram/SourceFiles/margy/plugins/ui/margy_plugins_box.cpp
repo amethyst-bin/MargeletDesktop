@@ -101,13 +101,13 @@ void PluginsBox::rebuildList() {
 
 	const auto plugins = Manager::Instance().installedPlugins();
 	if (plugins.empty()) {
-		const auto emptyLabel = _listContainer->add(
+		_listContainer->add(
 			object_ptr<::Ui::FlatLabel>(
 				_listContainer,
 				u"Нет установленных плагинов.\nНажмите «Установить из файла (.marp)», чтобы добавить плагин."_q,
 				st::boxLabel),
-			st::settingsSendTypePadding);
-		emptyLabel->setAlignment(Qt::AlignCenter);
+			st::settingsSendTypePadding,
+			style::al_center);
 		return;
 	}
 

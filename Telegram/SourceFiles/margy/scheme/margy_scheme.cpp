@@ -37,7 +37,7 @@ bool HandleUrl(const QString &url, const QVariant &context) {
 		: Core::App().activeWindow()
 		? Core::App().activeWindow()->sessionController()
 		: nullptr;
-	const auto window = controller ? controller->widget() : nullptr;
+	const auto window = controller ? static_cast<QWidget*>(controller->widget().get()) : nullptr;
 
 	if (target.isEmpty() || target == u"settings"_q || target == u"margy"_q) {
 		if (controller) {

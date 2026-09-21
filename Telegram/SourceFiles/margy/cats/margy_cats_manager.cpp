@@ -9,6 +9,7 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QRandomGenerator>
 
 namespace Margy::Cats {

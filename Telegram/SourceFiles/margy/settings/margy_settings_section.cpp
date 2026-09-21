@@ -55,13 +55,13 @@ void MargySettingsSection::setupContent() {
 	}, planeWrap->lifetime());
 
 	// Title and Version
-	const auto titleLabel = content->add(
+	content->add(
 		object_ptr<Ui::FlatLabel>(
 			content,
 			u"Margy Desktop v" + Config::Instance().version(),
 			st::boxTitle),
-		st::settingsSendTypePadding);
-	titleLabel->setAlignment(Qt::AlignCenter);
+		st::settingsSendTypePadding,
+		style::al_center);
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);

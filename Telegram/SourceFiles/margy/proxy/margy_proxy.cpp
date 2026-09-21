@@ -1,5 +1,6 @@
 #include "margy/proxy/margy_proxy.h"
 #include "core/application.h"
+#include "core/core_settings.h"
 #include "core/core_settings_proxy.h"
 #include "mtproto/mtproto_proxy_data.h"
 
