@@ -33,7 +33,7 @@ void BadgeBox::Show(QWidget *parent, int64_t peerId) {
 }
 
 void BadgeBox::setupUi(const Badge &badge) {
-	const bool isRu = QLocale::system().name().startsWith("ru", Qt::CaseInsensitive);
+	const auto isRu = QLocale::system().name().startsWith(u"ru"_q, Qt::CaseInsensitive);
 
 	setWindowTitle(badge.title(isRu));
 	setMinimumWidth(320);
@@ -67,8 +67,8 @@ void BadgeBox::setupUi(const Badge &badge) {
 	buttonsLayout->setSpacing(12);
 
 	if (!badge.url.isEmpty()) {
-		const QString actionText = isRu ? "Перейти" : "Open";
-		auto *actionButton = new QPushButton(actionText, this);
+		const auto actionText = isRu ? u"Перейти"_q : u"Open"_q;
+		const auto actionButton = new QPushButton(actionText, this);
 		actionButton->setCursor(Qt::PointingHandCursor);
 		connect(actionButton, &QPushButton::clicked, this, [url = badge.url] {
 			QDesktopServices::openUrl(QUrl(url));
@@ -76,8 +76,8 @@ void BadgeBox::setupUi(const Badge &badge) {
 		buttonsLayout->addWidget(actionButton);
 	}
 
-	const QString closeText = isRu ? "Закрыть" : "Close";
-	auto *closeButton = new QPushButton(closeText, this);
+	const auto closeText = isRu ? u"Закрыть"_q : u"Close"_q;
+	const auto closeButton = new QPushButton(closeText, this);
 	closeButton->setCursor(Qt::PointingHandCursor);
 	connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
 	buttonsLayout->addWidget(closeButton);

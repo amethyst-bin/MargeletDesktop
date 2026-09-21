@@ -2,6 +2,8 @@
 #include "margy/plugins/margy_plugin_manager.h"
 #include "boxes/abstract_box.h"
 #include "ui/vertical_list.h"
+#include "ui/wrap/vertical_layout.h"
+#include "ui/wrap/padding_wrap.h"
 #include "ui/widgets/buttons.h"
 #include "styles/style_settings.h"
 #include "styles/style_boxes.h"

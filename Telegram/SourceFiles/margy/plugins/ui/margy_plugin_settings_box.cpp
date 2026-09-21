@@ -4,6 +4,7 @@
 #include "margy/margy_config.h"
 #include "boxes/abstract_box.h"
 #include "ui/vertical_list.h"
+#include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/checkbox.h"
 #include "ui/widgets/labels.h"

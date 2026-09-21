@@ -15,6 +15,7 @@
 #include "margy/plugins/ui/margy_plugin_console_box.h"
 
 #include "ui/vertical_list.h"
+#include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/checkbox.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/labels.h"
@@ -57,8 +58,8 @@ void MargySettingsSection::setupContent() {
 		object_ptr<Ui::FlatLabel>(
 			content,
 			u"Margy Desktop v" + Config::Instance().version(),
-			st::settingsHeader),
-		st::settingsHeaderPadding);
+			st::boxTitle),
+		st::settingsSendTypePadding);
 	titleLabel->setAlignment(Qt::AlignCenter);
 
 	Ui::AddSkip(content);

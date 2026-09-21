@@ -18,10 +18,7 @@ void PlayMeow() {
 	static std::unique_ptr<Media::Audio::Track> track;
 	if (!track) {
 		track = Media::Audio::Current().createTrack();
-		bytes::vector data(
-			reinterpret_cast<const std::byte*>(kMeowData),
-			reinterpret_cast<const std::byte*>(kMeowData + kMeowDataSize));
-		track->fillFromData(std::move(data));
+		track->fillFromData(bytes::make_vector(kMeowData));
 	}
 	if (track) {
 		track->playOnce();

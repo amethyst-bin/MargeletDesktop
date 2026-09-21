@@ -6,6 +6,7 @@
 #include "margy/margy_config.h"
 #include "boxes/abstract_box.h"
 #include "ui/vertical_list.h"
+#include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/checkbox.h"
 #include "ui/widgets/labels.h"
@@ -95,22 +96,13 @@ void PluginsBox::rebuildList() {
 		return;
 	}
 
-	const auto layout = qobject_cast<::Ui::VerticalLayout*>(_listContainer.data());
-	if (!layout) {
-		return;
-	}
-
-	while (layout->count() > 0) {
-		const auto item = layout->takeAt(0);
-		delete item->widget();
-		delete item;
-	}
+	_listContainer->clear();
 
 	const auto plugins = Manager::Instance().installedPlugins();
 	if (plugins.empty()) {
-		const auto emptyLabel = layout->add(
+		const auto emptyLabel = _listContainer->add(
 			object_ptr<::Ui::FlatLabel>(
-				layout,
+				_listContainer,
 				u"Нет установленных плагинов.\nНажмите «Установить из файла (.marp)», чтобы добавить плагин."_q,
 				st::boxLabel),
 			st::settingsSendTypePadding);
@@ -119,8 +111,8 @@ void PluginsBox::rebuildList() {
 	}
 
 	for (const auto &p : plugins) {
-		const auto row = layout->add(
-			object_ptr<::Ui::VerticalLayout>(layout),
+		const auto row = _listContainer->add(
+			object_ptr<::Ui::VerticalLayout>(_listContainer),
 			st::settingsSendTypePadding);
 
 		// Header row: Checkbox with name & version
@@ -187,7 +179,7 @@ void PluginsBox::rebuildList() {
 		btnLayout->addWidget(deleteBtn);
 		btnLayout->addStretch();
 
-		::Ui::AddDivider(layout);
+		::Ui::AddDivider(_listContainer);
 	}
 }
 

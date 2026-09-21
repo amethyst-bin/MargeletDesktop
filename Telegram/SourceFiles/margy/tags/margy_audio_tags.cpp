@@ -71,11 +71,11 @@ bool WriteTags(
 		const QString &srcPath,
 		const QString &dstPath,
 		const TagInfo &tags) {
-	QFile src(srcPath);
+	auto src = QFile(srcPath);
 	if (!src.open(QIODevice::ReadOnly)) {
 		return false;
 	}
-	QFile dst(dstPath);
+	auto dst = QFile(dstPath);
 	if (!dst.open(QIODevice::WriteOnly)) {
 		return false;
 	}

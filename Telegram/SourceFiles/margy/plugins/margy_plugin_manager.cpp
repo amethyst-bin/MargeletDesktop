@@ -56,7 +56,7 @@ QString Manager::filesPath(const QString &pluginId) const {
 
 void Manager::ensureHostScript() {
 	const auto scriptPath = pluginsPath() + u"/margy_host.py"_q;
-	QFile file(scriptPath);
+	auto file = QFile(scriptPath);
 	if (!file.exists() || file.size() != qint64(strlen(kMargyHostScript))) {
 		if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
 			file.write(kMargyHostScript);
@@ -92,7 +92,7 @@ void Manager::reloadInstalled() {
 			continue;
 		}
 
-		QFile mFile(manifestPath);
+		auto mFile = QFile(manifestPath);
 		if (!mFile.open(QIODevice::ReadOnly)) {
 			continue;
 		}
@@ -128,7 +128,7 @@ void Manager::reloadInstalled() {
 			u"hooks"_q) != manifest.permissions.end();
 
 		if (!manifest.usesHooks) {
-			QFile mainFile(mainPath);
+			auto mainFile = QFile(mainPath);
 			if (mainFile.open(QIODevice::ReadOnly)) {
 				const auto src = QString::fromUtf8(mainFile.readAll());
 				if (src.contains(u"margelet.hook("_q)) {
@@ -168,7 +168,7 @@ bool Manager::installPlugin(const QString &marpPath, QString *outError) {
 	}
 
 	const auto manifestPath = stagingDir + u"/manifest.json"_q;
-	QFile mFile(manifestPath);
+	auto mFile = QFile(manifestPath);
 	if (!mFile.open(QIODevice::ReadOnly)) {
 		if (outError) {
 			*outError = u"Архив не содержит manifest.json"_q;

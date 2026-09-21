@@ -32,8 +32,10 @@ bool HandleUrl(const QString &url, const QVariant &context) {
 	const auto my = context.value<ClickHandlerContext>();
 	const auto controller = my.sessionWindow.get()
 		? my.sessionWindow.get()
-		: Core::App().lastActivePrimaryWindow()
-		? Core::App().lastActivePrimaryWindow()->sessionController()
+		: Core::App().activePrimaryWindow()
+		? Core::App().activePrimaryWindow()->sessionController()
+		: Core::App().activeWindow()
+		? Core::App().activeWindow()->sessionController()
 		: nullptr;
 	const auto window = controller ? controller->widget() : nullptr;
 

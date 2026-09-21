@@ -2,6 +2,10 @@
 
 #include "ui/layers/box_content.h"
 
+namespace Ui {
+class VerticalLayout;
+} // namespace Ui
+
 namespace Margy::Plugins::UI {
 
 class PluginsBox final : public ::Ui::BoxContent {
@@ -16,7 +20,7 @@ protected:
 private:
 	void rebuildList();
 
-	QPointer<QWidget> _listContainer;
+	::Ui::VerticalLayout *_listContainer = nullptr;
 };
 
 } // namespace Margy::Plugins::UI

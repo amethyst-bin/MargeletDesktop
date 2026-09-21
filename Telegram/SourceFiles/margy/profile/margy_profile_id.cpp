@@ -7,9 +7,9 @@ QString FormatPeerId(PeerId peerId) {
 	if (peerId.is<UserId>()) {
 		return QString::number(bare);
 	} else if (peerId.is<ChannelId>()) {
-		return "-100" + QString::number(bare);
+		return u"-100"_q + QString::number(bare);
 	} else if (peerId.is<ChatId>()) {
-		return '-' + QString::number(bare);
+		return u'-'_q + QString::number(bare);
 	}
 	return QString::number(bare);
 }

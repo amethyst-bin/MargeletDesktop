@@ -89,7 +89,7 @@ void Host::initProcess() {
 
 	_process = std::make_unique<QProcess>();
 	_process->setProgram(pythonPath);
-	_process->setArguments({ u"-u"_q, hostScript });
+	_process->setArguments(QStringList{ u"-u"_q, hostScript });
 
 	QObject::connect(_process.get(), &QProcess::readyReadStandardOutput, [=] {
 		while (_process && _process->canReadLine()) {

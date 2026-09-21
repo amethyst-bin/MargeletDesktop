@@ -20,7 +20,6 @@ public:
 
 private:
 	void setupUi();
-	void apply();
 };
 
 } // namespace Margy::Fonts

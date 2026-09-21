@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFile>
 #include <QMessageBox>
 
 namespace Margy::Tags {
@@ -71,7 +72,7 @@ void AudioTagsBox::setupUi() {
 			QString(),
 			u"Изображения (*.jpg *.jpeg *.png)"_q);
 		if (!path.isEmpty()) {
-			QFile imgFile(path);
+			auto imgFile = QFile(path);
 			if (imgFile.open(QIODevice::ReadOnly)) {
 				_cover = imgFile.readAll();
 				coverBtn->setText(u"Обложка выбрана!"_q);
