@@ -4,7 +4,7 @@
 #include "margy/plugins/margy_plugin_manager.h"
 #include "margy/plugins/margy_plugin_host.h"
 #include "margy/margy_config.h"
-
+#include "boxes/abstract_box.h"
 #include "ui/vertical_list.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/checkbox.h"
