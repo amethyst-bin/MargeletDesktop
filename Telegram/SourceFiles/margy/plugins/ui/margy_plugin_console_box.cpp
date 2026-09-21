@@ -57,16 +57,16 @@ void PluginConsoleBox::prepare() {
 		edit->appendPlainText(formatLine(line));
 	}, lifetime());
 
-	addButton(u"Очистить"_q, [=] {
+	addButton(rpl::single(u"Очистить"_q), [=] {
 		Manager::Instance().clearConsole();
 		edit->clear();
 	});
 
-	addButton(u"Скопировать"_q, [=] {
+	addButton(rpl::single(u"Скопировать"_q), [=] {
 		QGuiApplication::clipboard()->setText(edit->toPlainText());
 	});
 
-	addButton(u"Закрыть"_q, [=] { closeBox(); });
+	addButton(rpl::single(u"Закрыть"_q), [=] { closeBox(); });
 }
 
 } // namespace Margy::Plugins::UI

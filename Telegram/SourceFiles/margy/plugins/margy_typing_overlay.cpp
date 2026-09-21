@@ -14,15 +14,18 @@ void TypingOverlay::Attach(QWidget *inputField, const QString &fieldId) {
 	if (!inputField) {
 		return;
 	}
-	const auto existing = inputField->findChild<TypingOverlay*>();
-	if (!existing) {
-		new TypingOverlay(inputField, fieldId);
+	for (const auto child : inputField->children()) {
+		if (child->objectName() == u"margy_typing_overlay"_q) {
+			return;
+		}
 	}
+	new TypingOverlay(inputField, fieldId);
 }
 
 TypingOverlay::TypingOverlay(QWidget *parent, const QString &fieldId)
 : QWidget(parent)
 , _fieldId(fieldId) {
+	setObjectName(u"margy_typing_overlay"_q);
 	setAttribute(Qt::WA_TransparentForMouseEvents);
 	setAttribute(Qt::WA_NoSystemBackground);
 	setAttribute(Qt::WA_TranslucentBackground);

@@ -89,7 +89,7 @@ void PluginsBox::prepare() {
 
 	rebuildList();
 
-	addButton(u"Закрыть"_q, [=] { closeBox(); });
+	addButton(rpl::single(u"Закрыть"_q), [=] { closeBox(); });
 }
 
 void PluginsBox::rebuildList() {

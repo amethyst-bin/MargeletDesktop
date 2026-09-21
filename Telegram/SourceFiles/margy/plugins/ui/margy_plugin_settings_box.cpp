@@ -11,6 +11,7 @@
 #include "styles/style_settings.h"
 #include "styles/style_boxes.h"
 #include "styles/style_layers.h"
+#include <rpl/variable.h>
 
 namespace Margy::Plugins::UI {
 
@@ -86,18 +87,27 @@ void PluginSettingsBox::prepare() {
 				}
 			}
 
+			const auto state = std::make_shared<int>(initialIdx);
+			const auto formatText = [=](int idx) {
+				const auto selected = (idx >= 0 && idx < int(row.options.size()))
+					? row.options[idx]
+					: current;
+				return row.title + u": "_q + selected;
+			};
+			const auto label = std::make_shared<rpl::variable<QString>>(
+				formatText(initialIdx));
+
 			const auto btn = content->add(
 				object_ptr<::Ui::SettingsButton>(
 					content,
-					rpl::single(row.title + u": "_q + (initialIdx < int(row.options.size()) ? row.options[initialIdx] : current)),
+					label->value(),
 					st::settingsButton),
 				st::settingsSendTypePadding);
 
-			const auto state = std::make_shared<int>(initialIdx);
 			btn->setClickedCallback([=, opts = row.options, key = row.key] {
 				*state = (*state + 1) % int(opts.size());
 				const auto selected = opts[*state];
-				btn->setText(rpl::single(row.title + u": "_q + selected));
+				*label = formatText(*state);
 				Config::Instance().setPluginPref(_pluginId, key, selected);
 				Host::Instance().onSettingChanged(_pluginId, key, selected);
 			});
@@ -122,7 +132,7 @@ void PluginSettingsBox::prepare() {
 		}
 	}
 
-	addButton(u"Готово"_q, [=] { closeBox(); });
+	addButton(rpl::single(u"Готово"_q), [=] { closeBox(); });
 }
 
 } // namespace Margy::Plugins::UI
