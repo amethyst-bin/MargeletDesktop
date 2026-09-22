@@ -119,6 +119,22 @@ constexpr auto kMinWidthAppearDuration = crl::time(160);
 	return b;
 }
 
+[[nodiscard]] ClickHandlerPtr MargyBadgeClickHandler(
+		const Margy::Badges::Badge &badge) {
+	static auto handlers = base::flat_map<QString, ClickHandlerPtr>();
+	const auto key = badge.id.isEmpty() ? badge.title : badge.id;
+	auto it = handlers.find(key);
+	if (it == handlers.end()) {
+		it = handlers.emplace(
+			key,
+			std::make_shared<LambdaClickHandler>([badge] {
+				Margy::Badges::BadgeBox::Show(nullptr, badge);
+			})
+		).first;
+	}
+	return it->second;
+}
+
 using PreparedLink = Iv::Markdown::PreparedLink;
 using PreparedLinkKind = Iv::Markdown::PreparedLinkKind;
 using MediaActivation = Iv::Markdown::MediaActivation;
@@ -2547,7 +2563,9 @@ void Message::paintFromName(
 		return &info->nameText();
 	}();
 	const auto statusWidth = _fromNameStatus
-		? st::dialogsPremiumIcon.icon.width()
+		? (_fromNameStatus->custom
+			? (st::emojiSize - 2 * _fromNameStatus->skip)
+			: st::dialogsPremiumIcon.icon.width())
 		: 0;
 	const auto via = item->Get<HistoryMessageVia>();
 	const auto viaShown = via && !displayForwardedFrom() && via->width;
@@ -2555,7 +2573,7 @@ void Message::paintFromName(
 		? (via->width + st::msgServiceFont->spacew)
 		: 0;
 	const auto margyBadge = from ? MargyBadgeForPeer(from) : std::nullopt;
-	const auto margyBadgeWidth = margyBadge ? (16 + 4) : 0;
+	const auto margyBadgeWidth = margyBadge ? (16 + 8) : 0;
 	const auto nameAvailableWidth = std::max(
 		((statusWidth && availableWidth > statusWidth)
 			? (availableWidth - statusWidth)
@@ -2626,16 +2644,16 @@ void Message::paintFromName(
 	if (margyBadge) {
 		const auto badgeX = availableLeft
 			+ nameWidth
-			+ (statusWidth ? (statusWidth + 4) : 4);
+			+ (statusWidth ? (statusWidth + 8) : 8);
 		const auto badgeY = trect.top() + (st::msgNameFont->height - 16) / 2;
 		Margy::Badges::PaintBadgeIcon(p, QRect(badgeX, badgeY, 16, 16), margyBadge->color);
 	}
 	const auto skipWidth = nameWidth
 		+ (_fromNameStatus
-			? (st::dialogsPremiumIcon.icon.width()
+			? (statusWidth
 				+ st::msgServiceFont->spacew)
 			: 0)
-		+ (margyBadge ? (16 + 4) : 0)
+		+ (margyBadge ? (16 + 8) : 0)
 		+ st::msgServiceFont->spacew;
 	availableLeft += skipWidth;
 	availableWidth -= skipWidth;
@@ -4269,10 +4287,12 @@ bool Message::getStateFromName(
 		}();
 
 		const auto statusWidth = (from && _fromNameStatus)
-			? st::dialogsPremiumIcon.icon.width()
+			? (_fromNameStatus->custom
+				? (st::emojiSize - 2 * _fromNameStatus->skip)
+				: st::dialogsPremiumIcon.icon.width())
 			: 0;
 		const auto margyBadge = from ? MargyBadgeForPeer(from) : std::nullopt;
-		const auto margyBadgeWidth = margyBadge ? (16 + 4) : 0;
+		const auto margyBadgeWidth = margyBadge ? (16 + 8) : 0;
 		const auto via = item->Get<HistoryMessageVia>();
 		const auto viaShown = via && !displayForwardedFrom() && via->width;
 		const auto viaSkipWidth = viaShown
@@ -4302,11 +4322,9 @@ bool Message::getStateFromName(
 		if (margyBadge) {
 			const auto badgeX = availableLeft
 				+ nameWidth
-				+ (statusWidth ? (statusWidth + 4) : 4);
+				+ (statusWidth ? (statusWidth + 8) : 8);
 			if (point.x() >= badgeX && point.x() < badgeX + 16) {
-				outResult->link = std::make_shared<LambdaClickHandler>([badge = *margyBadge] {
-					Margy::Badges::BadgeBox::Show(nullptr, badge);
-				});
+				outResult->link = MargyBadgeClickHandler(*margyBadge);
 				return true;
 			}
 		}
@@ -4321,10 +4339,10 @@ bool Message::getStateFromName(
 
 		const auto skipWidth = nameWidth
 			+ (_fromNameStatus
-				? (st::dialogsPremiumIcon.icon.width()
+				? (statusWidth
 					+ st::msgServiceFont->spacew)
 				: 0)
-			+ (margyBadge ? (16 + 4) : 0)
+			+ (margyBadge ? (16 + 8) : 0)
 			+ st::msgServiceFont->spacew;
 		availableLeft += skipWidth;
 		availableWidth -= skipWidth;

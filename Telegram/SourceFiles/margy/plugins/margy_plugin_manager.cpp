@@ -88,8 +88,15 @@ void Manager::reloadInstalled() {
 		const auto folder = info.absoluteFilePath();
 		const auto manifestPath = folder + u"/manifest.json"_q;
 		const auto mainPath = folder + u"/main.py"_q;
-		if (!QFileInfo::exists(manifestPath) || !QFileInfo::exists(mainPath)) {
+		if (!QFileInfo::exists(manifestPath)) {
 			continue;
+		}
+		if (!QFileInfo::exists(mainPath)) {
+			auto stub = QFile(mainPath);
+			if (stub.open(QIODevice::WriteOnly)) {
+				stub.write("# MTP plugin stub\ndef on_start():\n    pass\n");
+				stub.close();
+			}
 		}
 
 		auto mFile = QFile(manifestPath);
@@ -97,7 +104,9 @@ void Manager::reloadInstalled() {
 			continue;
 		}
 
-		const auto doc = QJsonDocument::fromJson(mFile.readAll());
+		const auto manifestData = mFile.readAll();
+		mFile.close();
+		const auto doc = QJsonDocument::fromJson(manifestData);
 		if (!doc.isObject()) {
 			continue;
 		}
@@ -218,7 +227,10 @@ bool Manager::installPlugin(const QString &marpPath, QString *outError) {
 		return false;
 	}
 
-	const auto doc = QJsonDocument::fromJson(mFile.readAll());
+	const auto manifestData = mFile.readAll();
+	mFile.close();
+
+	const auto doc = QJsonDocument::fromJson(manifestData);
 	if (!doc.isObject()) {
 		if (outError) {
 			*outError = u"Некорректный manifest.json"_q;
@@ -246,6 +258,14 @@ bool Manager::installPlugin(const QString &marpPath, QString *outError) {
 		}
 		QDir(stagingDir).removeRecursively();
 		return false;
+	}
+	const auto targetMain = targetDir + u"/main.py"_q;
+	if (!QFile::exists(targetMain)) {
+		auto stub = QFile(targetMain);
+		if (stub.open(QIODevice::WriteOnly)) {
+			stub.write("# MTP plugin stub\ndef on_start():\n    pass\n");
+			stub.close();
+		}
 	}
 	QDir(stagingDir).removeRecursively();
 

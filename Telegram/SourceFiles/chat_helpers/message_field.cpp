@@ -8,6 +8,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/message_field.h"
 #include "margy/plugins/margy_typing_overlay.h"
 #include "margy/plugins/margy_plugin_hooks.h"
+#include "margy/markup/margy_markup.h"
+#include <QtWidgets/QMenu>
+#include <QtGui/QAction>
 
 #include "history/history_widget.h"
 #include "history/history.h" // History::session
@@ -598,6 +601,49 @@ auto InitMessageFieldHandlers(MessageFieldHandlersArgs &&args)
 	field->setBlockquoteCache([=] {
 		const auto colorIndex = session->user()->colorIndex();
 		return style->coloredQuoteCache(false, colorIndex).get();
+	});
+	field->addContextMenuHook([field](const Ui::InputField::ContextMenuRequest &request) {
+		const auto phraseTitle = Ui::Integration::Instance().phraseFormattingTitle();
+		auto submenu = (QMenu*)nullptr;
+		for (const auto action : request.menu->actions()) {
+			if (action->text() == phraseTitle && action->menu()) {
+				submenu = action->menu();
+				break;
+			}
+		}
+		if (!submenu) {
+			return;
+		}
+		submenu->addSeparator();
+
+		const auto cursor = field->textCursor();
+		const auto hasSelection = cursor.hasSelection();
+
+		const auto applyMarkup = [field](int kind, int value = 0) {
+			auto c = field->textCursor();
+			if (!c.hasSelection()) {
+				return;
+			}
+			const auto selected = c.selectedText();
+			const auto replacement = Margy::Markup::Open(kind, value)
+				+ selected
+				+ Margy::Markup::Close();
+			c.insertText(replacement);
+		};
+
+		const auto addAction = [&](const QString &title, int kind, int value = 0) {
+			const auto action = new QAction(title, submenu);
+			action->setDisabled(!hasSelection);
+			QObject::connect(action, &QAction::triggered, field, [=] {
+				applyMarkup(kind, value);
+			});
+			submenu->addAction(action);
+		};
+
+		addAction(u"Dim"_q, Margy::Markup::kKindDim);
+		addAction(u"Outline"_q, Margy::Markup::kKindOutline);
+		addAction(u"Rainbow"_q, Margy::Markup::kKindRainbow);
+		addAction(u"Size"_q, Margy::Markup::kKindSize);
 	});
 	return style;
 }

@@ -62,6 +62,73 @@ class _Console:
 
 # --- Mock Java & Android environment ---
 
+class DynamicObject:
+    def __init__(self, name="DynamicObject", *args, **kwargs):
+        self._name = name
+
+    def __getattr__(self, name):
+        if name == "__name__":
+            return self._name
+        return DynamicObject(f"{self._name}.{name}")
+
+    def __setattr__(self, name, value):
+        if name.startswith("_"):
+            super().__setattr__(name, value)
+        else:
+            self.__dict__[name] = value
+
+    def __call__(self, *args, **kwargs):
+        return DynamicObject(f"{self._name}()")
+
+    def __getitem__(self, item):
+        return DynamicObject(f"{self._name}[{item}]")
+
+    def __setitem__(self, item, value):
+        pass
+
+    def __iter__(self):
+        return iter([])
+
+    def __bool__(self):
+        return True
+
+    def __int__(self):
+        return 0
+
+    def __float__(self):
+        return 0.0
+
+    def __str__(self):
+        return ""
+
+    def __repr__(self):
+        return f"<DynamicObject {self._name}>"
+
+    def __add__(self, other):
+        return self
+
+    def __radd__(self, other):
+        return other
+
+    def __sub__(self, other):
+        return self
+
+    def __mul__(self, other):
+        return self
+
+    def __truediv__(self, other):
+        return self
+
+
+class DynamicModule(types.ModuleType):
+    def __init__(self, name):
+        super().__init__(name)
+        self.__file__ = f"<{name}>"
+
+    def __getattr__(self, name):
+        return DynamicObject(f"{self.__name__}.{name}")
+
+
 class JavaSpanned:
     SPAN_EXCLUSIVE_EXCLUSIVE = 33
 
@@ -284,7 +351,7 @@ class JavaModule:
             return FilesProxy
         if name == "org.telegram.messenger.AndroidUtilities":
             return AndroidUtilitiesProxy
-        return type(name.split(".")[-1], (), {})
+        return DynamicObject(name)
 
     @staticmethod
     def dynamic_proxy(cls):
@@ -293,6 +360,10 @@ class JavaModule:
     @staticmethod
     def jarray(elem_type):
         return lambda items: list(items)
+
+    @staticmethod
+    def cast(cls, obj):
+        return obj
 
 
 class HostProxy:
@@ -569,6 +640,56 @@ def run_plugin(plugin_id, name, folder, prefs=None):
     if prefs:
         m._prefs.update(prefs)
     _plugins[plugin_id] = m
+
+    compat_mode = True
+    try:
+        with open(main_py, "r", encoding="utf-8", errors="ignore") as f:
+            first_line = f.readline().strip()
+            if first_line.startswith("#! Desktop"):
+                compat_mode = False
+    except Exception:
+        pass
+
+    if compat_mode:
+        compat_modules = [
+            "android",
+            "android.app",
+            "android.content",
+            "android.content.res",
+            "android.graphics",
+            "android.graphics.drawable",
+            "android.media",
+            "android.net",
+            "android.os",
+            "android.text",
+            "android.text.style",
+            "android.util",
+            "android.view",
+            "android.widget",
+            "de",
+            "de.robv",
+            "de.robv.android",
+            "de.robv.android.xposed",
+            "org",
+            "org.telegram",
+            "org.telegram.messenger",
+            "org.telegram.ui",
+            "org.telegram.ui.ActionBar",
+            "org.telegram.ui.Components",
+        ]
+        for mod_name in compat_modules:
+            if mod_name not in sys.modules:
+                sys.modules[mod_name] = DynamicModule(mod_name)
+
+        java_mod = DynamicModule("java")
+        java_mod.jclass = JavaModule.jclass
+        java_mod.dynamic_proxy = JavaModule.dynamic_proxy
+        java_mod.jarray = JavaModule.jarray
+        java_mod.cast = JavaModule.cast
+        sys.modules["java"] = java_mod
+
+        import builtins
+        builtins.margelet = m
 
     out, err = sys.stdout, sys.stderr
     sys.stdout = _Console(name, False)

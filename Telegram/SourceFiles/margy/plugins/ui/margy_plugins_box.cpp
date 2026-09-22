@@ -34,7 +34,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 	const auto installBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
 			box.get(),
-			rpl::single(u"➕ Установить из файла (.marp, .zip)"_q),
+			rpl::single(u"➕ Установить из файла (.marp, .mtp, .zip)"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	installBtn->setClickedCallback([=] {
@@ -42,7 +42,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 			box.get(),
 			u"Выберите файл плагина"_q,
 			QString(),
-			u"Плагины Margelet (*.marp *.zip);;Все файлы (*.*)"_q);
+			u"Плагины Margelet (*.marp *.mtp *.zip);;Все файлы (*.*)"_q);
 		if (!file.isEmpty()) {
 			auto err = QString();
 			if (!Manager::Instance().installPlugin(file, &err)) {
@@ -175,6 +175,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 			::Ui::AddDivider(listContainer);
 		}
 		listContainer->resizeToWidth(box->width());
+		box->verticalLayout()->resizeToWidth(box->width());
 	};
 
 	Manager::Instance().pluginsUpdated(

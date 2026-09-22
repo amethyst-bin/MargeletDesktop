@@ -2,6 +2,7 @@
 #include "data/stickers/data_custom_emoji.h"
 
 #include <vector>
+#include <algorithm>
 
 namespace Margy::Markup {
 namespace {
@@ -14,13 +15,6 @@ constexpr int kTrits = 3;
 constexpr int kKindTrits = 2;
 constexpr int kValueTrits = 3;
 constexpr int kMarkLen = 1 + kKindTrits + kValueTrits;
-
-constexpr int kKindSize = 0;
-constexpr int kKindDim = 1;
-constexpr int kKindRainbow = 2;
-constexpr int kKindButton = 3;
-constexpr int kKindEmoji = 4;
-constexpr int kKindOutline = 5;
 
 constexpr int kLenTrits = 5;
 constexpr int kByteTrits = 6;
@@ -53,6 +47,17 @@ inline int DecodeNumber(const QString &text, int at, int count) {
 	return value;
 }
 
+inline QString EncodeNumber(int value, int count) {
+	QString result;
+	result.reserve(count);
+	for (int i = 0; i < count; ++i) {
+		const auto trit = value % kTrits;
+		value /= kTrits;
+		result.push_back(QChar(kTrit + trit));
+	}
+	return result;
+}
+
 inline bool HasPayload(int kind) {
 	return kind == kKindButton || kind == kKindEmoji;
 }
@@ -62,6 +67,9 @@ struct Run {
 	int value = 0;
 	int start = 0;
 	int end = 0;
+	int openTagStart = 0;
+	int openTagEnd = 0;
+	int closeTagPos = 0;
 	QByteArray payload;
 
 	[[nodiscard]] QString text() const {
@@ -78,6 +86,7 @@ std::vector<Run> Parse(const QString &text) {
 	struct OpenTag {
 		int kind = 0;
 		int value = 0;
+		int openTagStart = 0;
 		int start = 0;
 		QByteArray payload;
 	};
@@ -109,6 +118,7 @@ std::vector<Run> Parse(const QString &text) {
 			stack.push_back(OpenTag{
 				.kind = kind,
 				.value = value,
+				.openTagStart = i,
 				.start = after,
 				.payload = std::move(payload),
 			});
@@ -122,6 +132,9 @@ std::vector<Run> Parse(const QString &text) {
 					.value = top.value,
 					.start = top.start,
 					.end = i,
+					.openTagStart = top.openTagStart,
+					.openTagEnd = top.start,
+					.closeTagPos = i,
 					.payload = std::move(top.payload),
 				});
 			}
@@ -134,6 +147,25 @@ std::vector<Run> Parse(const QString &text) {
 
 bool Has(const QString &text) {
 	return text.contains(QChar(kOpen)) || text.contains(kHeader);
+}
+
+QString Open(int kind, int value, const QByteArray &payload) {
+	QString result;
+	result.reserve(1 + kKindTrits + kValueTrits + (payload.isEmpty() ? 0 : (kLenTrits + payload.size() * kByteTrits)));
+	result.push_back(QChar(kOpen));
+	result += EncodeNumber(kind, kKindTrits);
+	result += EncodeNumber(value, kValueTrits);
+	if (HasPayload(kind)) {
+		result += EncodeNumber(payload.size(), kLenTrits);
+		for (int b = 0; b < payload.size(); ++b) {
+			result += EncodeNumber(static_cast<uchar>(payload[b]), kByteTrits);
+		}
+	}
+	return result;
+}
+
+QString Close() {
+	return QString(QChar(kClose));
 }
 
 void Process(TextWithEntities &textWithEntities) {
@@ -167,32 +199,88 @@ void Process(TextWithEntities &textWithEntities) {
 	}
 
 	const auto runs = Parse(textWithEntities.text);
+	if (runs.empty() && !textWithEntities.text.contains(QChar(kOpen))) {
+		return;
+	}
+
+	const auto origSize = textWithEntities.text.size();
+	std::vector<bool> removed(origSize, false);
+
 	for (const auto &run : runs) {
-		if (run.start >= run.end || run.start < 0 || run.end > textWithEntities.text.size()) {
+		for (int i = run.openTagStart; i < run.openTagEnd && i < origSize; ++i) {
+			removed[i] = true;
+		}
+		if (run.closeTagPos >= 0 && run.closeTagPos < origSize) {
+			removed[run.closeTagPos] = true;
+		}
+	}
+
+	for (int i = 0; i < origSize; ++i) {
+		const auto u = textWithEntities.text[i].unicode();
+		if (u == kOpen || u == kClose || (u >= kTrit && u < kTrit + kTrits)) {
+			removed[i] = true;
+		}
+	}
+
+	QString cleanText;
+	cleanText.reserve(origSize);
+	std::vector<int> oldToNew(origSize + 1, 0);
+
+	for (int i = 0; i < origSize; ++i) {
+		oldToNew[i] = cleanText.size();
+		if (!removed[i]) {
+			cleanText.push_back(textWithEntities.text[i]);
+		}
+	}
+	oldToNew[origSize] = cleanText.size();
+
+	for (auto it = textWithEntities.entities.begin(); it != textWithEntities.entities.end();) {
+		const auto start = oldToNew[std::clamp(it->offset(), 0, origSize)];
+		const auto end = oldToNew[std::clamp(it->offset() + it->length(), 0, origSize)];
+		if (end > start) {
+			*it = EntityInText(it->type(), start, end - start, it->data());
+			++it;
+		} else {
+			it = textWithEntities.entities.erase(it);
+		}
+	}
+
+	for (const auto &run : runs) {
+		const auto start = oldToNew[std::clamp(run.start, 0, origSize)];
+		const auto end = oldToNew[std::clamp(run.end, 0, origSize)];
+		const auto length = end - start;
+		if (length <= 0) {
 			continue;
 		}
-		const auto length = run.end - run.start;
 		if (run.kind == kKindButton) {
 			const auto url = run.text();
 			if (!url.isEmpty()) {
 				textWithEntities.entities.push_back(
-					EntityInText(EntityType::CustomUrl, run.start, length, url));
+					EntityInText(EntityType::CustomUrl, start, length, url));
 			}
 		} else if (run.kind == kKindEmoji) {
 			bool ok = false;
 			const auto docId = run.text().trimmed().toULongLong(&ok);
 			if (ok && docId != 0) {
 				textWithEntities.entities.push_back(
-					EntityInText(EntityType::CustomEmoji, run.start, length, Data::SerializeCustomEmojiId(docId)));
+					EntityInText(EntityType::CustomEmoji, start, length, Data::SerializeCustomEmojiId(docId)));
 			}
 		} else if (run.kind == kKindOutline) {
 			textWithEntities.entities.push_back(
-				EntityInText(EntityType::Bold, run.start, length));
+				EntityInText(EntityType::Bold, start, length));
 		} else if (run.kind == kKindDim) {
 			textWithEntities.entities.push_back(
-				EntityInText(EntityType::Italic, run.start, length));
+				EntityInText(EntityType::Italic, start, length));
+		} else if (run.kind == kKindRainbow) {
+			textWithEntities.entities.push_back(
+				EntityInText(EntityType::Underline, start, length));
+		} else if (run.kind == kKindSize) {
+			textWithEntities.entities.push_back(
+				EntityInText(EntityType::Bold, start, length));
 		}
 	}
+
+	textWithEntities.text = std::move(cleanText);
 }
 
 } // namespace Margy::Markup
