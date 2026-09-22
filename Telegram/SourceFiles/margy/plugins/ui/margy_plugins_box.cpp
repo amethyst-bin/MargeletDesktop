@@ -13,6 +13,7 @@
 #include "ui/widgets/labels.h"
 #include "ui/wrap/padding_wrap.h"
 #include "ui/ui_utility.h"
+#include "ui/toast/toast.h"
 #include "styles/style_settings.h"
 #include "styles/style_boxes.h"
 #include "styles/style_layers.h"
@@ -27,11 +28,13 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 	box->setTitle(rpl::single(u"Плагины Margelet"_q));
 	box->setWidth(st::boxWideWidth);
 
+	const auto rebuildList = std::make_shared<Fn<void()>>();
+
 	// Top action buttons
 	const auto installBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
 			box.get(),
-			rpl::single(u"➕ Установить из файла (.marp)"_q),
+			rpl::single(u"➕ Установить из файла (.marp, .zip)"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	installBtn->setClickedCallback([=] {
@@ -39,11 +42,17 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 			box.get(),
 			u"Выберите файл плагина"_q,
 			QString(),
-			u"Плагины Margelet (*.marp)"_q);
+			u"Плагины Margelet (*.marp *.zip);;Все файлы (*.*)"_q);
 		if (!file.isEmpty()) {
 			auto err = QString();
 			if (!Manager::Instance().installPlugin(file, &err)) {
 				Manager::Instance().log(u"margelet"_q, u"Ошибка установки: "_q + err, true);
+				::Ui::Toast::Show(box.get(), u"Ошибка установки: "_q + err);
+			} else {
+				::Ui::Toast::Show(box.get(), u"Плагин успешно установлен!"_q);
+				if (*rebuildList) {
+					(*rebuildList)();
+				}
 			}
 		}
 	});
@@ -74,7 +83,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 
 	const auto listContainer = box->addRow(object_ptr<::Ui::VerticalLayout>(box.get()));
 
-	const auto rebuildList = [=] {
+	*rebuildList = [=] {
 		listContainer->clear();
 
 		const auto plugins = Manager::Instance().installedPlugins();
@@ -155,6 +164,10 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 				st::defaultBoxButton);
 			deleteBtn->setClickedCallback([=, pluginId = p.id] {
 				Manager::Instance().uninstallPlugin(pluginId);
+				::Ui::Toast::Show(box.get(), u"Плагин удалён"_q);
+				if (*rebuildList) {
+					(*rebuildList)();
+				}
 			});
 			btnLayout->addWidget(deleteBtn);
 			btnLayout->addStretch();
@@ -166,10 +179,12 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 
 	Manager::Instance().pluginsUpdated(
 	) | rpl::on_next([=] {
-		rebuildList();
+		if (*rebuildList) {
+			(*rebuildList)();
+		}
 	}, box->lifetime());
 
-	rebuildList();
+	(*rebuildList)();
 
 	box->addButton(rpl::single(u"Закрыть"_q), [=] { box->closeBox(); });
 }

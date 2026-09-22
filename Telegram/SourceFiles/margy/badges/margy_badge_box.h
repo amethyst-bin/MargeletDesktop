@@ -18,6 +18,7 @@ class BadgeBox final {
 public:
 	static void Show(QWidget *parent, const Badge &badge);
 	static void Show(QWidget *parent, int64_t peerId);
+	static void Show(QWidget *parent, int64_t peerId, const QString &username);
 };
 
 } // namespace Margy::Badges

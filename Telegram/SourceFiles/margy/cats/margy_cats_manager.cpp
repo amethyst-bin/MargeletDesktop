@@ -145,6 +145,8 @@ QString CatsManager::localPhotoPath(const Cat &cat) const {
 			auto file = QFile(localPath);
 			if (file.open(QIODevice::WriteOnly)) {
 				file.write(reply->readAll());
+				file.close();
+				CatsManager::Instance()._photoDownloaded.fire_copy(localPath);
 			}
 		}
 	});

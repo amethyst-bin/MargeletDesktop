@@ -366,6 +366,15 @@ void BuildSectionButtons(SectionBuilder &builder) {
 	const auto controller = builder.controller();
 	const auto showOther = builder.showOther();
 
+	builder.addSectionButton({
+		.title = rpl::single(u"Настройки Margy"_q),
+		.targetSection = ::Margy::Settings::MargySettingsId(),
+		.icon = { &st::menuIconSend, IconType::Rounded, nullptr, QBrush(QColor(0x8D, 0xD1, 0xB0)) },
+		.keywords = { u"margy"_q, u"margelet"_q, u"badges"_q, u"cats"_q },
+	});
+	builder.addDivider();
+	builder.addSkip();
+
 	if (!session->supportMode()) {
 		builder.addSectionButton({
 			.title = tr::lng_settings_my_account(),
@@ -435,13 +444,6 @@ void BuildSectionButtons(SectionBuilder &builder) {
 		.targetSection = AdvancedId(),
 		.icon = { &st::menuIconManage, IconType::Rounded, nullptr, QBrush(QColor(0xF5, 0x7C, 0x00)) },
 		.keywords = { u"performance"_q, u"proxy"_q, u"experimental"_q },
-	});
-
-	builder.addSectionButton({
-		.title = rpl::single(u"Настройки Margy"_q),
-		.targetSection = ::Margy::Settings::MargySettingsId(),
-		.icon = { &st::menuIconManage, IconType::Rounded, nullptr, QBrush(QColor(0x8D, 0xD1, 0xB0)) },
-		.keywords = { u"margy"_q, u"margelet"_q, u"badges"_q, u"cats"_q },
 	});
 
 	builder.addSectionButton({

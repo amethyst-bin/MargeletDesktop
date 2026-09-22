@@ -4,6 +4,9 @@
 #include <vector>
 #include <memory>
 
+#include <rpl/event_stream.h>
+#include <rpl/producer.h>
+
 namespace Margy::Cats {
 
 struct Cat {
@@ -21,6 +24,9 @@ public:
 	[[nodiscard]] const std::vector<Cat> &cats() const;
 	[[nodiscard]] Cat randomCat() const;
 	[[nodiscard]] QString localPhotoPath(const Cat &cat) const;
+	[[nodiscard]] rpl::producer<QString> photoDownloaded() const {
+		return _photoDownloaded.events();
+	}
 
 private:
 	CatsManager();
@@ -31,6 +37,7 @@ private:
 	void fetchRemote();
 
 	std::vector<Cat> _cats;
+	rpl::event_stream<QString> _photoDownloaded;
 };
 
 } // namespace Margy::Cats

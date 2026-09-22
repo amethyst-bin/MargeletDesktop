@@ -61,6 +61,8 @@ target_sources(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_settings_box.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_console_box.h
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_console_box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/markup/margy_markup.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/markup/margy_markup.cpp
 )
 
 target_include_directories(Telegram PRIVATE

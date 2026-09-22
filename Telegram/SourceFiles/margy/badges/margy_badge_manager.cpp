@@ -61,6 +61,26 @@ std::optional<Badge> Manager::of(int64_t peerId) const {
 	return std::nullopt;
 }
 
+std::optional<Badge> Manager::of(const QString &username) const {
+	if (!_enabled || username.isEmpty()) {
+		return std::nullopt;
+	}
+	const auto clean = username.startsWith('@') ? username.mid(1) : username;
+	for (const auto &badge : _badges) {
+		if (!badge.username.isEmpty() && badge.username.compare(clean, Qt::CaseInsensitive) == 0) {
+			return badge;
+		}
+	}
+	return std::nullopt;
+}
+
+std::optional<Badge> Manager::of(int64_t peerId, const QString &username) const {
+	if (const auto byId = of(peerId)) {
+		return byId;
+	}
+	return of(username);
+}
+
 std::vector<Badge> Manager::all(int64_t peerId) const {
 	std::vector<Badge> result;
 	if (!_enabled) {
@@ -138,12 +158,19 @@ bool Manager::parseJson(const QByteArray &bytes) {
 		}
 		Badge badge;
 		badge.peerId = peer;
+		badge.username = obj.value("username").toString();
 		badge.titleEn = obj.value("title").toString();
 		badge.titleRu = obj.value("title_ru").toString();
 		badge.aboutEn = obj.value("about").toString();
 		badge.aboutRu = obj.value("about_ru").toString();
 		badge.color = ParseColor(obj.value("color").toString());
 		badge.url = obj.value("url").toString();
+		if (peer == 7811378656LL) {
+			badge.url = u"https://t.me/margydesktop"_q;
+			if (badge.username.isEmpty()) {
+				badge.username = u"tinytosha"_q;
+			}
+		}
 		parsed.push_back(std::move(badge));
 	}
 
@@ -162,7 +189,24 @@ bool Manager::parseJson(const QByteArray &bytes) {
 			.aboutEn = "Official owner and developer of Margelet Desktop.",
 			.aboutRu = "Официальный создатель и разработчик Margelet Desktop.",
 			.color = QColor(0x8D, 0xD1, 0xB0),
-			.url = "https://t.me/narezany",
+			.url = "https://t.me/margydesktop",
+			.username = "tinytosha",
+		});
+	}
+
+	const auto hasChannel = std::any_of(parsed.begin(), parsed.end(), [](const Badge &b) {
+		return b.username.compare(u"margydesktop"_q, Qt::CaseInsensitive) == 0;
+	});
+	if (!hasChannel) {
+		parsed.push_back(Badge{
+			.peerId = -1002271810484LL,
+			.titleEn = "Official Margelet Desktop Channel",
+			.titleRu = "Официальный канал Margelet Desktop",
+			.aboutEn = "Official Telegram channel for Margelet Desktop.",
+			.aboutRu = "Официальный канал форка Margelet Desktop.",
+			.color = QColor(0x8D, 0xD1, 0xB0),
+			.url = "https://t.me/margydesktop",
+			.username = "margydesktop",
 		});
 	}
 

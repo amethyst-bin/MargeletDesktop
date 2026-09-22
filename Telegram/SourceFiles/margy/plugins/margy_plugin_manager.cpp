@@ -147,6 +147,34 @@ void Manager::reloadInstalled() {
 	_pluginsUpdated.fire({});
 }
 
+namespace {
+
+bool CopyDirectory(const QString &from, const QString &to) {
+	QDir dir(from);
+	if (!dir.exists()) {
+		return false;
+	}
+	QDir().mkpath(to);
+	for (const auto &entry : dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+		const auto subFrom = entry.absoluteFilePath();
+		const auto subTo = to + '/' + entry.fileName();
+		if (!CopyDirectory(subFrom, subTo)) {
+			return false;
+		}
+	}
+	for (const auto &entry : dir.entryInfoList(QDir::Files)) {
+		const auto fileFrom = entry.absoluteFilePath();
+		const auto fileTo = to + '/' + entry.fileName();
+		QFile::remove(fileTo);
+		if (!QFile::copy(fileFrom, fileTo)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+} // namespace
+
 bool Manager::installPlugin(const QString &marpPath, QString *outError) {
 	if (!QFileInfo::exists(marpPath)) {
 		if (outError) {
@@ -161,13 +189,26 @@ bool Manager::installPlugin(const QString &marpPath, QString *outError) {
 
 	if (!Host::Instance().unpackArchive(marpPath, stagingDir)) {
 		if (outError) {
-			*outError = u"Не удалось распаковать архив .marp"_q;
+			*outError = u"Не удалось распаковать архив"_q;
 		}
 		QDir(stagingDir).removeRecursively();
 		return false;
 	}
 
-	const auto manifestPath = stagingDir + u"/manifest.json"_q;
+	auto effectiveDir = stagingDir;
+	auto manifestPath = effectiveDir + u"/manifest.json"_q;
+	if (!QFile::exists(manifestPath)) {
+		const auto subdirs = QDir(stagingDir).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+		for (const auto &sd : subdirs) {
+			const auto subManifest = sd.absoluteFilePath() + u"/manifest.json"_q;
+			if (QFile::exists(subManifest)) {
+				effectiveDir = sd.absoluteFilePath();
+				manifestPath = subManifest;
+				break;
+			}
+		}
+	}
+
 	auto mFile = QFile(manifestPath);
 	if (!mFile.open(QIODevice::ReadOnly)) {
 		if (outError) {
@@ -198,13 +239,15 @@ bool Manager::installPlugin(const QString &marpPath, QString *outError) {
 
 	const auto targetDir = filesPath(id);
 	QDir(targetDir).removeRecursively();
-	if (!QDir().rename(stagingDir, targetDir)) {
+	QDir().mkpath(targetDir);
+	if (!CopyDirectory(effectiveDir, targetDir)) {
 		if (outError) {
-			*outError = u"Не удалось скопировать плагин"_q;
+			*outError = u"Не удалось скопировать файлы плагина"_q;
 		}
 		QDir(stagingDir).removeRecursively();
 		return false;
 	}
+	QDir(stagingDir).removeRecursively();
 
 	setEnabled(id, true);
 	reloadInstalled();

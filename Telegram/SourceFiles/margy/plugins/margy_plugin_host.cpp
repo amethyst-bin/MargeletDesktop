@@ -343,17 +343,28 @@ rpl::producer<TypingAnimFrame> Host::typingAnimation(const QString &fieldId) {
 }
 
 bool Host::unpackArchive(const QString &archivePath, const QString &targetDir) {
+	QDir().mkpath(targetDir);
+
+	auto tarProc = QProcess();
+	tarProc.start(u"tar.exe"_q, { u"-xf"_q, archivePath, u"-C"_q, targetDir });
+	if (tarProc.waitForFinished(10000) && tarProc.exitCode() == 0) {
+		return true;
+	}
+
 	const auto pythonPath = findPython();
-	const auto args = QStringList{
-		u"-m"_q,
-		u"zipfile"_q,
-		u"-e"_q,
-		archivePath,
-		targetDir,
-	};
-	auto proc = QProcess();
-	proc.start(pythonPath, args);
-	return proc.waitForFinished(5000) && (proc.exitCode() == 0);
+	if (!pythonPath.isEmpty()) {
+		auto pyProc = QProcess();
+		pyProc.start(pythonPath, { u"-m"_q, u"zipfile"_q, u"-e"_q, archivePath, targetDir });
+		if (pyProc.waitForFinished(10000) && pyProc.exitCode() == 0) {
+			return true;
+		}
+	}
+
+	auto psProc = QProcess();
+	const auto psCmd = QString(u"Expand-Archive -LiteralPath '%1' -DestinationPath '%2' -Force"_q)
+		.arg(archivePath, targetDir);
+	psProc.start(u"powershell.exe"_q, { u"-NoProfile"_q, u"-Command"_q, psCmd });
+	return psProc.waitForFinished(15000) && (psProc.exitCode() == 0);
 }
 
 } // namespace Margy::Plugins

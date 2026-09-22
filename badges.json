@@ -1,5 +1,29 @@
 [
   {
+    "peer": 7811378656,
+    "username": "tinytosha",
+    "title": "Margelet Desktop Owner",
+    "title_ru": "Владелец Margelet Desktop",
+    "title_zh": "Margelet Desktop 拥有者",
+    "about": "Owner of Margelet Desktop.",
+    "about_ru": "Владелец форка Margelet Desktop.",
+    "about_zh": "Margelet Desktop 的拥有者。",
+    "color": "8DD1B0",
+    "url": "https://t.me/margydesktop"
+  },
+  {
+    "peer": -1002271810484,
+    "username": "margydesktop",
+    "title": "Official Margelet Desktop Channel",
+    "title_ru": "Официальный канал Margelet Desktop",
+    "title_zh": "Margelet Desktop 官方频道",
+    "about": "Official Telegram channel for Margelet Desktop.",
+    "about_ru": "Официальный канал форка Margelet Desktop.",
+    "about_zh": "Margelet Desktop 的官方频道。",
+    "color": "8DD1B0",
+    "url": "https://t.me/margydesktop"
+  },
+  {
     "peer": 7826361017,
     "title": "Margy creator",
     "title_ru": "Создатель Margy",

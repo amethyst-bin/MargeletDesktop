@@ -58,6 +58,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "mainwidget.h"
 #include "main/main_session.h"
+#include "margy/badges/margy_badge_manager.h"
+#include "margy/badges/margy_badge_box.h"
+#include "margy/badges/margy_badge_icon.h"
 #include "settings/sections/settings_premium.h"
 #include "ui/text/text_options.h"
 #include "ui/painter.h"
@@ -95,6 +98,25 @@ constexpr auto kMinWidthAppearDuration = crl::time(160);
 
 [[nodiscard]] int RevealLineRight(const Ui::Text::LineLayoutInfo &line) {
 	return line.left + line.width;
+}
+
+[[nodiscard]] std::optional<Margy::Badges::Badge> MargyBadgeForPeer(PeerData *peer) {
+	if (!peer) {
+		return std::nullopt;
+	}
+	int64_t bareId = 0;
+	if (peerIsUser(peer->id)) {
+		bareId = static_cast<int64_t>(peerToUser(peer->id).bare);
+	} else if (peerIsChannel(peer->id)) {
+		bareId = -static_cast<int64_t>(peerToChannel(peer->id).bare);
+	} else if (peerIsChat(peer->id)) {
+		bareId = -static_cast<int64_t>(peerToChat(peer->id).bare);
+	}
+	auto b = Margy::Badges::Of(bareId, peer->username());
+	if (!b && bareId != 0) {
+		b = Margy::Badges::Of(-bareId);
+	}
+	return b;
 }
 
 using PreparedLink = Iv::Markdown::PreparedLink;
@@ -1529,6 +1551,7 @@ QSize Message::performCountOptimalSize() {
 					+ (_fromNameStatus
 						? st::dialogsPremiumIcon.icon.width()
 						: 0)
+					+ (MargyBadgeForPeer(from).has_value() ? 20 : 0)
 					+ st::msgPadding.right();
 				if (via && !displayForwardedFrom()) {
 					namew += st::msgServiceFont->spacew + via->maxWidth
@@ -2531,10 +2554,12 @@ void Message::paintFromName(
 	const auto viaSkipWidth = viaShown
 		? (via->width + st::msgServiceFont->spacew)
 		: 0;
+	const auto margyBadge = from ? MargyBadgeForPeer(from) : std::nullopt;
+	const auto margyBadgeWidth = margyBadge ? (16 + 4) : 0;
 	const auto nameAvailableWidth = std::max(
 		((statusWidth && availableWidth > statusWidth)
 			? (availableWidth - statusWidth)
-			: availableWidth) - viaSkipWidth,
+			: availableWidth) - viaSkipWidth - margyBadgeWidth,
 		0);
 	if (statusWidth && availableWidth > statusWidth) {
 		const auto x = availableLeft
@@ -2598,11 +2623,19 @@ void Message::paintFromName(
 		.availableWidth = nameAvailableWidth,
 		.elisionLines = 1,
 	});
+	if (margyBadge) {
+		const auto badgeX = availableLeft
+			+ nameWidth
+			+ (statusWidth ? (statusWidth + 4) : 4);
+		const auto badgeY = trect.top() + (st::msgNameFont->height - 16) / 2;
+		Margy::Badges::PaintBadgeIcon(p, QRect(badgeX, badgeY, 16, 16), margyBadge->color);
+	}
 	const auto skipWidth = nameWidth
 		+ (_fromNameStatus
 			? (st::dialogsPremiumIcon.icon.width()
 				+ st::msgServiceFont->spacew)
 			: 0)
+		+ (margyBadge ? (16 + 4) : 0)
 		+ st::msgServiceFont->spacew;
 	availableLeft += skipWidth;
 	availableWidth -= skipWidth;
@@ -4238,6 +4271,8 @@ bool Message::getStateFromName(
 		const auto statusWidth = (from && _fromNameStatus)
 			? st::dialogsPremiumIcon.icon.width()
 			: 0;
+		const auto margyBadge = from ? MargyBadgeForPeer(from) : std::nullopt;
+		const auto margyBadgeWidth = margyBadge ? (16 + 4) : 0;
 		const auto via = item->Get<HistoryMessageVia>();
 		const auto viaShown = via && !displayForwardedFrom() && via->width;
 		const auto viaSkipWidth = viaShown
@@ -4246,7 +4281,7 @@ bool Message::getStateFromName(
 		const auto nameAvailableWidth = std::max(
 			((statusWidth && availableWidth > statusWidth)
 				? (availableWidth - statusWidth)
-				: availableWidth) - viaSkipWidth,
+				: availableWidth) - viaSkipWidth - margyBadgeWidth,
 			0);
 		const auto nameWidth = std::min(
 			nameText->maxWidth(),
@@ -4264,6 +4299,17 @@ bool Message::getStateFromName(
 				return true;
 			}
 		}
+		if (margyBadge) {
+			const auto badgeX = availableLeft
+				+ nameWidth
+				+ (statusWidth ? (statusWidth + 4) : 4);
+			if (point.x() >= badgeX && point.x() < badgeX + 16) {
+				outResult->link = std::make_shared<LambdaClickHandler>([badge = *margyBadge] {
+					Margy::Badges::BadgeBox::Show(nullptr, badge);
+				});
+				return true;
+			}
+		}
 		if (point.x() >= availableLeft
 			&& point.x() < availableLeft + availableWidth
 			&& point.x() < availableLeft + nameWidth) {
@@ -4278,6 +4324,7 @@ bool Message::getStateFromName(
 				? (st::dialogsPremiumIcon.icon.width()
 					+ st::msgServiceFont->spacew)
 				: 0)
+			+ (margyBadge ? (16 + 4) : 0)
 			+ st::msgServiceFont->spacew;
 		availableLeft += skipWidth;
 		availableWidth -= skipWidth;

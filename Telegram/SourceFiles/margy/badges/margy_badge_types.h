@@ -15,6 +15,7 @@ struct Badge {
 	QString aboutRu;
 	QColor color = QColor(0x8D, 0xD1, 0xB0);
 	QString url;
+	QString username;
 
 	[[nodiscard]] QString title(bool isRussian = true) const {
 		if (isRussian && !titleRu.isEmpty()) {
@@ -67,7 +68,18 @@ inline const std::vector<Badge>& BuiltInBadges() {
 			.aboutEn = "Official owner and developer of Margelet Desktop.",
 			.aboutRu = "Официальный создатель и разработчик Margelet Desktop.",
 			.color = QColor(0x8D, 0xD1, 0xB0),
-			.url = "https://t.me/narezany",
+			.url = "https://t.me/margydesktop",
+			.username = "tinytosha",
+		},
+		Badge{
+			.peerId = -1002271810484LL,
+			.titleEn = "Official Margelet Desktop Channel",
+			.titleRu = "Официальный канал Margelet Desktop",
+			.aboutEn = "Official Telegram channel for Margelet Desktop.",
+			.aboutRu = "Официальный канал форка Margelet Desktop.",
+			.color = QColor(0x8D, 0xD1, 0xB0),
+			.url = "https://t.me/margydesktop",
+			.username = "margydesktop",
 		},
 		Badge{
 			.peerId = 7826361017LL,

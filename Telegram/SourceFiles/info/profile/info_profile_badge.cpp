@@ -82,7 +82,7 @@ void Badge::setContent(Content content) {
 	_content = content;
 	_emojiStatus = nullptr;
 	_view.destroy();
-	if (_content.badge == BadgeType::None) {
+	if (_content.badge == BadgeType::None && !_content.hasMargyBadge) {
 		_updated.fire({});
 		return;
 	}
@@ -105,29 +105,36 @@ void Badge::setContent(Content content) {
 		case BadgeType::Direct:
 			return tr::lng_direct_badge(tr::now);
 		case BadgeType::Margy:
+		case BadgeType::None:
 			return QString("Margy Badge");
 		}
 		Unexpected("badge type");
 	}());
 	_view->show();
-	switch (_content.badge) {
-	case BadgeType::Verified:
-	case BadgeType::BotVerified:
-	case BadgeType::Premium: {
-		const auto id = _content.emojiStatusId;
-		const auto emoji = id
-			? (Data::FrameSizeFromTag(sizeTag())
-				/ style::DevicePixelRatio())
-			: 0;
-		const auto &style = st();
-		const auto icon = (_content.badge == BadgeType::Verified)
-			? &style.verified
-			: id
-			? nullptr
-			: &style.premium;
-		const auto iconForeground = (_content.badge == BadgeType::Verified)
-			? &style.verifiedCheck
-			: nullptr;
+
+	int mainWidth = 0;
+	int mainHeight = 0;
+	const auto &style = st();
+
+	const auto id = _content.emojiStatusId;
+	const auto emoji = id
+		? (Data::FrameSizeFromTag(sizeTag())
+			/ style::DevicePixelRatio())
+		: 0;
+	const auto icon = (_content.badge == BadgeType::Verified)
+		? &style.verified
+		: id
+		? nullptr
+		: (_content.badge == BadgeType::Premium)
+		? &style.premium
+		: nullptr;
+	const auto iconForeground = (_content.badge == BadgeType::Verified)
+		? &style.verifiedCheck
+		: nullptr;
+
+	if (_content.badge == BadgeType::Verified
+		|| _content.badge == BadgeType::BotVerified
+		|| _content.badge == BadgeType::Premium) {
 		if (id) {
 			_emojiStatus = _session->data().customEmojiManager().create(
 				Data::EmojiStatusCustomId(id),
@@ -142,54 +149,11 @@ void Badge::setContent(Content content) {
 					_customStatusLoopsLimit);
 			}
 		}
-		const auto width = emoji + (icon ? icon->width() : 0);
-		const auto height = std::max(emoji, icon ? icon->height() : 0);
-		_view->resize(width, height);
-		_view->paintRequest(
-		) | rpl::on_next([=, check = _view.data()]{
-			if (_emojiStatus) {
-				auto args = Ui::Text::CustomEmoji::Context{
-					.textColor = style.premiumFg->c,
-					.now = crl::now(),
-					.paused = ((_animationPaused && _animationPaused())
-						|| On(PowerSaving::kEmojiStatus)),
-				};
-				if (!_emojiStatusPanel
-					|| !_emojiStatusPanel->paintBadgeFrame(check)) {
-					Painter p(check);
-					_emojiStatus->paint(p, args);
-				}
-			}
-			if (icon) {
-				auto p = Painter(check);
-				if (_overrideSt && !iconForeground) {
-					icon->paint(
-						p,
-						emoji,
-						0,
-						check->width(),
-						_overrideSt->premiumFg->c);
-				} else {
-					icon->paint(p, emoji, 0, check->width());
-				}
-				if (iconForeground) {
-					if (_overrideSt) {
-						iconForeground->paint(
-							p,
-							emoji,
-							0,
-							check->width(),
-							_overrideSt->premiumFg->c);
-					} else {
-						iconForeground->paint(p, emoji, 0, check->width());
-					}
-				}
-			}
-		}, _view->lifetime());
-	} break;
-	case BadgeType::Scam:
-	case BadgeType::Fake:
-	case BadgeType::Direct: {
+		mainWidth = emoji + (icon ? icon->width() : 0);
+		mainHeight = std::max(emoji, icon ? icon->height() : 0);
+	} else if (_content.badge == BadgeType::Scam
+		|| _content.badge == BadgeType::Fake
+		|| _content.badge == BadgeType::Direct) {
 		const auto type = (_content.badge == BadgeType::Direct)
 			? Ui::TextBadgeType::Direct
 			: (_content.badge == BadgeType::Fake)
@@ -197,44 +161,98 @@ void Badge::setContent(Content content) {
 			: Ui::TextBadgeType::Scam;
 		const auto size = Ui::TextBadgeSize(type);
 		const auto skip = st::infoVerifiedCheckPosition.x();
-		_view->resize(
-			size.width() + 2 * skip,
-			size.height() + 2 * skip);
-		_view->paintRequest(
-		) | rpl::on_next([=, badge = _view.data()]{
-			Painter p(badge);
+		mainWidth = size.width() + 2 * skip;
+		mainHeight = size.height() + 2 * skip;
+	}
+
+	const auto margySize = 20;
+	const auto gap = (_content.hasMargyBadge && mainWidth > 0) ? 4 : 0;
+	const auto totalWidth = mainWidth + gap + (_content.hasMargyBadge ? margySize : 0);
+	const auto totalHeight = std::max(mainHeight, _content.hasMargyBadge ? margySize : 0);
+	_view->resize(totalWidth, totalHeight);
+
+	_view->paintRequest(
+	) | rpl::on_next([=, check = _view.data()]{
+		if (_emojiStatus) {
+			auto args = Ui::Text::CustomEmoji::Context{
+				.textColor = style.premiumFg->c,
+				.now = crl::now(),
+				.paused = ((_animationPaused && _animationPaused())
+					|| On(PowerSaving::kEmojiStatus)),
+			};
+			if (!_emojiStatusPanel
+				|| !_emojiStatusPanel->paintBadgeFrame(check)) {
+				Painter p(check);
+				_emojiStatus->paint(p, args);
+			}
+		}
+		if (icon) {
+			auto p = Painter(check);
+			if (_overrideSt && !iconForeground) {
+				icon->paint(
+					p,
+					emoji,
+					0,
+					check->width(),
+					_overrideSt->premiumFg->c);
+			} else {
+				icon->paint(p, emoji, 0, check->width());
+			}
+			if (iconForeground) {
+				if (_overrideSt) {
+					iconForeground->paint(
+						p,
+						emoji,
+						0,
+						check->width(),
+						_overrideSt->premiumFg->c);
+				} else {
+					iconForeground->paint(p, emoji, 0, check->width());
+				}
+			}
+		}
+		if (_content.badge == BadgeType::Scam
+			|| _content.badge == BadgeType::Fake
+			|| _content.badge == BadgeType::Direct) {
+			const auto type = (_content.badge == BadgeType::Direct)
+				? Ui::TextBadgeType::Direct
+				: (_content.badge == BadgeType::Fake)
+				? Ui::TextBadgeType::Fake
+				: Ui::TextBadgeType::Scam;
+			const auto skip = st::infoVerifiedCheckPosition.x();
+			Painter p(check);
 			Ui::DrawTextBadge(
 				type,
 				p,
-				badge->rect().marginsRemoved({ skip, skip, skip, skip }),
-				badge->width(),
+				QRect(skip, skip, mainWidth - 2 * skip, mainHeight - 2 * skip),
+				check->width(),
 				_overrideSt
 					? _overrideSt->premiumFg
 					: (type == Ui::TextBadgeType::Direct
 						? st::windowSubTextFg
 						: st::attentionButtonFg));
-			}, _view->lifetime());
-	} break;
-	case BadgeType::Margy: {
-		const auto size = 20;
-		_view->resize(size, size);
-		_view->paintRequest(
-		) | rpl::on_next([=, check = _view.data(), color = _content.margyColor]{
+		}
+		if (_content.hasMargyBadge) {
 			Painter p(check);
-			Margy::Badges::PaintBadgeIcon(p, check->rect(), color);
-		}, _view->lifetime());
-	} break;
-	}
+			const auto margyX = mainWidth + gap;
+			const auto margyY = (totalHeight - margySize) / 2;
+			Margy::Badges::PaintBadgeIcon(p, QRect(margyX, margyY, margySize, margySize), _content.margyColor);
+		}
+	}, _view->lifetime());
 
-	if (_content.badge == BadgeType::Margy) {
+	const auto hasMainClick = HasPremiumClick(_content);
+	if (_content.hasMargyBadge || (hasMainClick && _premiumClickCallback)) {
 		_view->setCursor(Qt::PointingHandCursor);
-		_view->setClickedCallback([parent = _parent, peerId = _content.margyPeerId] {
-			Margy::Badges::BadgeBox::Show(parent, peerId);
+		_view->setClickedCallback([=, parent = _parent, peerId = _content.margyPeerId, username = _content.margyUsername] {
+			const auto clickX = _view->mapFromGlobal(QCursor::pos()).x();
+			if (_content.hasMargyBadge && (clickX >= mainWidth + gap || !hasMainClick || !_premiumClickCallback)) {
+				Margy::Badges::BadgeBox::Show(parent, peerId, username);
+			} else if (hasMainClick && _premiumClickCallback) {
+				_premiumClickCallback();
+			}
 		});
-	} else if (!HasPremiumClick(_content) || !_premiumClickCallback) {
-		_view->setAttribute(Qt::WA_TransparentForMouseEvents);
 	} else {
-		_view->setClickedCallback(_premiumClickCallback);
+		_view->setAttribute(Qt::WA_TransparentForMouseEvents);
 	}
 
 	_updated.fire({});
@@ -242,13 +260,10 @@ void Badge::setContent(Content content) {
 
 void Badge::setPremiumClickCallback(Fn<void()> callback) {
 	_premiumClickCallback = std::move(callback);
-	if (_view && HasPremiumClick(_content)) {
-		if (!_premiumClickCallback) {
-			_view->setAttribute(Qt::WA_TransparentForMouseEvents);
-		} else {
-			_view->setAttribute(Qt::WA_TransparentForMouseEvents, false);
-			_view->setClickedCallback(_premiumClickCallback);
-		}
+	if (_view) {
+		const auto was = _content;
+		_content = {};
+		setContent(was);
 	}
 }
 
@@ -304,7 +319,7 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 	} else if (peerIsChat(peer->id)) {
 		bareId = -static_cast<int64_t>(peerToChat(peer->id).bare);
 	}
-	auto margyBadge = Margy::Badges::Of(bareId);
+	auto margyBadge = Margy::Badges::Of(bareId, peer->username());
 	if (!margyBadge && bareId != 0) {
 		margyBadge = Margy::Badges::Of(-bareId);
 	}
@@ -315,25 +330,31 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 		EmojiStatusIdValue(peer)
 	) | rpl::map([=](BadgeType badge, EmojiStatusId emojiStatusId) {
 		if (emojiStatusId.collectible && (badge == BadgeType::Verified)) {
-			return Badge::Content{ BadgeType::Premium, emojiStatusId };
+			return Badge::Content{
+				.badge = BadgeType::Premium,
+				.emojiStatusId = emojiStatusId,
+				.margyColor = margyBadge ? margyBadge->color : QColor(),
+				.margyPeerId = bareId,
+				.margyUsername = peer->username(),
+				.hasMargyBadge = margyBadge.has_value(),
+			};
 		}
 		if (badge == BadgeType::Verified) {
 			badge = BadgeType::None;
-		}
-		if (margyBadge.has_value()) {
-			return Badge::Content{
-				BadgeType::Margy,
-				emojiStatusId,
-				margyBadge->color,
-				bareId
-			};
 		}
 		if (statusOnlyForPremium && badge != BadgeType::Premium) {
 			emojiStatusId = EmojiStatusId();
 		} else if (emojiStatusId && badge == BadgeType::None) {
 			badge = BadgeType::Premium;
 		}
-		return Badge::Content{ badge, emojiStatusId };
+		return Badge::Content{
+			.badge = badge,
+			.emojiStatusId = emojiStatusId,
+			.margyColor = margyBadge ? margyBadge->color : QColor(),
+			.margyPeerId = bareId,
+			.margyUsername = peer->username(),
+			.hasMargyBadge = margyBadge.has_value(),
+		};
 	});
 }
 

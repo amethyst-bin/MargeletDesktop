@@ -28,6 +28,10 @@ public:
 		update();
 	}
 
+	int resizeGetHeight(int newWidth) override {
+		return 260;
+	}
+
 protected:
 	void paintEvent(QPaintEvent *e) override {
 		Painter p(this);
@@ -79,6 +83,14 @@ void CatsBox::prepare() {
 		style::al_center);
 
 	showCat(CatsManager::Instance().randomCat());
+
+	CatsManager::Instance().photoDownloaded(
+	) | rpl::on_next([=](const QString &path) {
+		if (_photoWidget && !_currentCat.photo.isEmpty() && path.endsWith(QFileInfo(_currentCat.photo).fileName())) {
+			_currentPixmap = QPixmap(path);
+			_photoWidget->setPixmap(_currentPixmap);
+		}
+	}, lifetime());
 
 	addButton(rpl::single(u"Ещё котик 🐱"_q), [=] {
 		showCat(CatsManager::Instance().randomCat());

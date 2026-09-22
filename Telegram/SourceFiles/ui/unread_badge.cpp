@@ -301,8 +301,12 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 	if (!margyBadge && bareId != 0) {
 		margyBadge = Margy::Badges::Of(-bareId);
 	}
+	if (!margyBadge) {
+		margyBadge = Margy::Badges::Of(peer->username());
+	}
 	if (margyBadge.has_value()) {
-		const auto skip = (result > 0) ? (st::dialogsScamSkip > 0 ? st::dialogsScamSkip : 4) : 0;
+		const auto baseSkip = std::max(st::dialogsScamSkip, 4) + 4;
+		const auto skip = (result > 0) ? baseSkip : 4;
 		descriptor.nameWidth += result + skip;
 		result += skip + drawMargyBadge(p, descriptor, margyBadge->color);
 	}

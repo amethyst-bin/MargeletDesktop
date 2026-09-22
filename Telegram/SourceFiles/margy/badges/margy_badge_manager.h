@@ -21,6 +21,8 @@ public:
 	void setEnabled(bool enabled);
 
 	[[nodiscard]] std::optional<Badge> of(int64_t peerId) const;
+	[[nodiscard]] std::optional<Badge> of(const QString &username) const;
+	[[nodiscard]] std::optional<Badge> of(int64_t peerId, const QString &username) const;
 	[[nodiscard]] std::vector<Badge> all(int64_t peerId) const;
 	[[nodiscard]] bool has(int64_t peerId) const;
 	[[nodiscard]] std::vector<Badge> list() const;
@@ -45,6 +47,14 @@ private:
 
 [[nodiscard]] inline std::optional<Badge> Of(int64_t peerId) {
 	return Manager::Instance().of(peerId);
+}
+
+[[nodiscard]] inline std::optional<Badge> Of(const QString &username) {
+	return Manager::Instance().of(username);
+}
+
+[[nodiscard]] inline std::optional<Badge> Of(int64_t peerId, const QString &username) {
+	return Manager::Instance().of(peerId, username);
 }
 
 [[nodiscard]] inline bool Has(int64_t peerId) {

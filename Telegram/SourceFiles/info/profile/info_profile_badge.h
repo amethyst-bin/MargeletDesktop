@@ -56,6 +56,8 @@ public:
 		EmojiStatusId emojiStatusId;
 		QColor margyColor;
 		int64_t margyPeerId = 0;
+		QString margyUsername;
+		bool hasMargyBadge = false;
 
 		friend inline bool operator==(const Content &, const Content &) = default;
 	};

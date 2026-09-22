@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "api/api_text_entities.h"
 
+#include "margy/markup/margy_markup.h"
 #include "data/data_document.h"
 #include "data/data_session.h"
 #include "data/data_user.h"
@@ -441,10 +442,12 @@ TextWithEntities ParseTextWithEntities(
 		Main::Session *session,
 		const MTPTextWithEntities &text) {
 	const auto &data = text.data();
-	return {
+	auto result = TextWithEntities{
 		.text = qs(data.vtext()),
 		.entities = EntitiesFromMTP(session, data.ventities().v),
 	};
+	Margy::Markup::Process(result);
+	return result;
 }
 
 } // namespace Api

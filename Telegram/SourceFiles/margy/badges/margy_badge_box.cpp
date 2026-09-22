@@ -57,4 +57,10 @@ void BadgeBox::Show(QWidget *parent, int64_t peerId) {
 	}
 }
 
+void BadgeBox::Show(QWidget *parent, int64_t peerId, const QString &username) {
+	if (const auto badge = Of(peerId, username)) {
+		Show(parent, *badge);
+	}
+}
+
 } // namespace Margy::Badges

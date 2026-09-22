@@ -21,6 +21,7 @@ public:
 
 	[[nodiscard]] QSize sizeHint() const override;
 	[[nodiscard]] QSize minimumSizeHint() const override;
+	int resizeGetHeight(int newWidth) override { return 160; }
 
 protected:
 	void paintEvent(QPaintEvent *e) override;
