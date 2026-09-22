@@ -62,6 +62,10 @@ inline bool HasPayload(int kind) {
 	return kind == kKindButton || kind == kKindEmoji;
 }
 
+inline int ClampIndex(int val, int maxVal) {
+	return (val < 0) ? 0 : (val > maxVal) ? maxVal : val;
+}
+
 struct Run {
 	int kind = 0;
 	int value = 0;
@@ -234,9 +238,10 @@ void Process(TextWithEntities &textWithEntities) {
 	}
 	oldToNew[origSize] = cleanText.size();
 
+	const auto maxIndex = int(origSize);
 	for (auto it = textWithEntities.entities.begin(); it != textWithEntities.entities.end();) {
-		const auto start = oldToNew[std::clamp(it->offset(), 0, origSize)];
-		const auto end = oldToNew[std::clamp(it->offset() + it->length(), 0, origSize)];
+		const auto start = oldToNew[ClampIndex(it->offset(), maxIndex)];
+		const auto end = oldToNew[ClampIndex(it->offset() + it->length(), maxIndex)];
 		if (end > start) {
 			*it = EntityInText(it->type(), start, end - start, it->data());
 			++it;
@@ -246,8 +251,8 @@ void Process(TextWithEntities &textWithEntities) {
 	}
 
 	for (const auto &run : runs) {
-		const auto start = oldToNew[std::clamp(run.start, 0, origSize)];
-		const auto end = oldToNew[std::clamp(run.end, 0, origSize)];
+		const auto start = oldToNew[ClampIndex(run.start, maxIndex)];
+		const auto end = oldToNew[ClampIndex(run.end, maxIndex)];
 		const auto length = end - start;
 		if (length <= 0) {
 			continue;
