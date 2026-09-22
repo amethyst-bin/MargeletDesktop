@@ -68,7 +68,8 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 		Host::Instance().restart();
 	});
 
-	box->addRow(object_ptr<::Ui::DividerLabel>(box.get(), rpl::single(QString())), st::boxRowPadding);
+	::Ui::AddDivider(box->verticalLayout());
+	::Ui::AddSkip(box->verticalLayout());
 	box->addRow(object_ptr<::Ui::FlatLabel>(box.get(), u"Установленные плагины"_q, st::boxTitle), st::boxRowPadding);
 
 	const auto listContainer = box->addRow(object_ptr<::Ui::VerticalLayout>(box.get()));
