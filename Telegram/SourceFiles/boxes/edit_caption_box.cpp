@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/emoji_suggestions_widget.h"
 #include "chat_helpers/field_autocomplete.h"
 #include "chat_helpers/message_field.h"
+#include "margy/markup/margy_markup.h"
 #include "chat_helpers/tabbed_panel.h"
 #include "chat_helpers/tabbed_selector.h"
 #include "core/application.h"
@@ -1298,7 +1299,8 @@ void EditCaptionBox::save() {
 		return;
 	}
 
-	const auto textWithTags = _field->getTextWithAppliedMarkdown();
+	auto textWithTags = _field->getTextWithAppliedMarkdown();
+	Margy::Markup::EncodeForSending(textWithTags);
 	if (!validateLength(textWithTags.text)) {
 		return;
 	}

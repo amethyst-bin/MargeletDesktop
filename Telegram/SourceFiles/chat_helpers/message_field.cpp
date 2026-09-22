@@ -619,31 +619,21 @@ auto InitMessageFieldHandlers(MessageFieldHandlersArgs &&args)
 		const auto cursor = field->textCursor();
 		const auto hasSelection = cursor.hasSelection();
 
-		const auto applyMarkup = [field](int kind, int value = 0) {
-			auto c = field->textCursor();
-			if (!c.hasSelection()) {
-				return;
-			}
-			const auto selected = c.selectedText();
-			const auto replacement = Margy::Markup::Open(kind, value)
-				+ selected
-				+ Margy::Markup::Close();
-			c.insertText(replacement);
-		};
-
-		const auto addAction = [&](const QString &title, int kind, int value = 0) {
+		const auto addAction = [&](const QString &title, const QString &tag) {
 			const auto action = new QAction(title, submenu);
 			action->setDisabled(!hasSelection);
+			action->setCheckable(true);
+			action->setChecked(field->isMarkdownTagActive(tag));
 			QObject::connect(action, &QAction::triggered, field, [=] {
-				applyMarkup(kind, value);
+				field->toggleSelectionMarkdown(tag);
 			});
 			submenu->addAction(action);
 		};
 
-		addAction(u"Dim"_q, Margy::Markup::kKindDim);
-		addAction(u"Outline"_q, Margy::Markup::kKindOutline);
-		addAction(u"Rainbow"_q, Margy::Markup::kKindRainbow);
-		addAction(u"Size"_q, Margy::Markup::kKindSize);
+		addAction(u"Dim"_q, Ui::InputField::kTagMargyDim);
+		addAction(u"Outline"_q, Ui::InputField::kTagMargyOutline);
+		addAction(u"Rainbow"_q, Ui::InputField::kTagMargyRainbow);
+		addAction(u"Size"_q, Ui::InputField::kTagMargySize);
 	});
 	return style;
 }

@@ -23,6 +23,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_polls.h"
 #include "api/api_sending.h"
 #include "api/api_text_entities.h"
+#include "margy/markup/margy_markup.h"
 #include "api/api_rich_tasks.h"
 #include "api/api_todo_lists.h"
 #include "api/api_self_destruct.h"
@@ -4688,6 +4689,7 @@ void ApiWrap::sendRichMessage(
 void ApiWrap::sendMessage(
 		MessageToSend &&message,
 		std::optional<MsgId> localMessageId) {
+	Margy::Markup::EncodeForSending(message.textWithTags);
 	const auto history = message.action.history;
 	const auto peer = history->peer;
 	const auto &textWithTags = message.textWithTags;

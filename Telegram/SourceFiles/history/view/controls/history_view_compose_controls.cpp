@@ -28,6 +28,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/compose/compose_show.h"
 #include "chat_helpers/emoji_suggestions_widget.h"
 #include "chat_helpers/message_field.h"
+#include "margy/markup/margy_markup.h"
 #include "chat_helpers/rich_paste_toast.h"
 #include "chat_helpers/tabbed_panel.h"
 #include "chat_helpers/tabbed_section.h"
@@ -6453,7 +6454,8 @@ TextWithEntities ComposeControls::prepareTextForEditMsg() const {
 	if (!_history) {
 		return {};
 	}
-	const auto textWithTags = getTextWithAppliedMarkdown();
+	auto textWithTags = getTextWithAppliedMarkdown();
+	Margy::Markup::EncodeForSending(textWithTags);
 	const auto prepareFlags = Ui::ItemTextOptions(
 		_history,
 		session().user()).flags;

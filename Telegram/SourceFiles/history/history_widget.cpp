@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_global_privacy.h"
 #include "api/api_report.h"
 #include "api/api_sending.h"
+#include "margy/markup/margy_markup.h"
 #include "api/api_send_progress.h"
 #include "api/api_unread_things.h"
 #include "base/random.h"
@@ -5308,7 +5309,8 @@ void HistoryWidget::windowIsVisibleChanged() {
 }
 
 TextWithEntities HistoryWidget::prepareTextForEditMsg() const {
-	const auto textWithTags = _field->getTextWithAppliedMarkdown();
+	auto textWithTags = _field->getTextWithAppliedMarkdown();
+	Margy::Markup::EncodeForSending(textWithTags);
 	const auto prepareFlags = Ui::ItemTextOptions(
 		_history,
 		session().user()).flags;

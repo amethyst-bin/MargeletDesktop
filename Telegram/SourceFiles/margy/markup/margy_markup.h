@@ -13,6 +13,7 @@ constexpr int kKindOutline = 5;
 
 [[nodiscard]] bool Has(const QString &text);
 void Process(TextWithEntities &textWithEntities);
+void EncodeForSending(TextWithTags &textWithTags);
 [[nodiscard]] QString Open(int kind, int value = 0, const QByteArray &payload = {});
 [[nodiscard]] QString Close();
 

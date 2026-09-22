@@ -26,6 +26,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_item.h"
 #include "history/history_item_helpers.h" // NewMessageFlags.
 #include "chat_helpers/message_field.h" // ConvertTextTagsToEntities.
+#include "margy/markup/margy_markup.h"
 #include "chat_helpers/stickers_dice_pack.h" // DicePacks::kDiceString.
 #include "ui/text/text_entity.h" // TextWithEntities.
 #include "ui/item_text_options.h" // Ui::ItemTextOptions.
@@ -239,6 +240,7 @@ void SendExistingMedia(
 	if (sendAs) {
 		sendFlags |= MTPmessages_SendMedia::Flag::f_send_as;
 	}
+	Margy::Markup::EncodeForSending(message.textWithTags);
 	auto caption = TextWithEntities{
 		message.textWithTags.text,
 		TextUtilities::ConvertTextTagsToEntities(message.textWithTags.tags)
@@ -1000,6 +1002,7 @@ struct ConfirmedLocalFile {
 		not_null<History*> history,
 		not_null<Main::Session*> session,
 		const std::shared_ptr<FilePrepareResult> &file) {
+	Margy::Markup::EncodeForSending(file->caption);
 	auto caption = TextWithEntities{
 		file->caption.text,
 		TextUtilities::ConvertTextTagsToEntities(file->caption.tags)

@@ -46,6 +46,14 @@ jobs:
           submodules: recursive
           path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}
 
+      - name: Apply patches.
+        shell: bash
+        run: |
+          if [ -f "$TBUILD/$REPO_NAME/Telegram/patches/lib_ui.patch" ]; then
+            cd "$TBUILD/$REPO_NAME/Telegram/lib_ui"
+            git apply "$TBUILD/$REPO_NAME/Telegram/patches/lib_ui.patch"
+          fi
+
       - name: First set up.
         shell: bash
         run: |

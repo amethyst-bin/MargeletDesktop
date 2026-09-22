@@ -1,0 +1,78 @@
+diff --git a/ui/text/text_entity.cpp b/ui/text/text_entity.cpp
+index aa9c1b3..029346d 100644
+--- a/ui/text/text_entity.cpp
++++ b/ui/text/text_entity.cpp
+@@ -2350,6 +2350,14 @@ EntitiesInText ConvertTextTagsToEntities(const TextWithTags::Tags &tags) {
+ 				result.collapsed = 1;
+ 			} else if (single == Tags::kTagSpoiler) {
+ 				result.set(EntityType::Spoiler);
++			} else if (single == Tags::kTagMargyDim) {
++				result.set(EntityType::Italic);
++			} else if (single == Tags::kTagMargyOutline) {
++				result.set(EntityType::Bold);
++			} else if (single == Tags::kTagMargyRainbow) {
++				result.set(EntityType::Underline);
++			} else if (single == Tags::kTagMargySize) {
++				result.set(EntityType::Bold);
+ 			} else if (IsRichFormattingTag(single)) {
+ 				if (single == Tags::kTagIvMarked) {
+ 					result.set(EntityType::Marked);
+diff --git a/ui/widgets/fields/input_field.cpp b/ui/widgets/fields/input_field.cpp
+index e41f8df..d2de028 100644
+--- a/ui/widgets/fields/input_field.cpp
++++ b/ui/widgets/fields/input_field.cpp
+@@ -74,6 +74,10 @@ const auto &kTagPre = InputField::kTagPre;
+ const auto &kTagBlockquote = InputField::kTagBlockquote;
+ const auto &kTagBlockquoteCollapsed = InputField::kTagBlockquoteCollapsed;
+ const auto &kTagSpoiler = InputField::kTagSpoiler;
++const auto &kTagMargyDim = InputField::kTagMargyDim;
++const auto &kTagMargyOutline = InputField::kTagMargyOutline;
++const auto &kTagMargyRainbow = InputField::kTagMargyRainbow;
++const auto &kTagMargySize = InputField::kTagMargySize;
+ const auto kTagCheckLinkMeta = u"^:/:/:^"_q;
+ const auto kSoftLine = QChar::LineSeparator;
+ const auto kHardLine = QChar::ParagraphSeparator;
+@@ -1084,6 +1088,17 @@ QTextImageFormat PrepareEmojiFormat(EmojiPtr emoji, style::font font) {
+ 		} else if (tag == kTagCode || IsTagPre(tag)) {
+ 			color = st::defaultTextPalette.monoFg->c;
+ 			font = font->monospace();
++		} else if (tag == kTagMargyDim) {
++			font = font->italic();
++			color = st.textFg->c;
++			color->setAlpha(140);
++		} else if (tag == kTagMargyOutline) {
++			font = font->bold();
++		} else if (tag == kTagMargyRainbow) {
++			font = font->underline();
++			color = QColor(255, 80, 180);
++		} else if (tag == kTagMargySize) {
++			font = font->bold();
+ 		} else if (instantViewEditorTagsEnabled) {
+ 			if (tag == InputField::kTagIvMarked) {
+ 				bg = st.textMarkBg->c;
+@@ -1572,6 +1587,10 @@ const QString InputField::kTagIvMarked = u"iv-marked"_q;
+ const QString InputField::kTagIvSubscript = u"iv-subscript"_q;
+ const QString InputField::kTagIvSuperscript = u"iv-superscript"_q;
+ const QString InputField::kTagIvMath = u"iv-math"_q;
++const QString InputField::kTagMargyDim = u"margy_dim"_q;
++const QString InputField::kTagMargyOutline = u"margy_outline"_q;
++const QString InputField::kTagMargyRainbow = u"margy_rainbow"_q;
++const QString InputField::kTagMargySize = u"margy_size"_q;
+ const QString InputField::kCustomEmojiTagStart = u"custom-emoji://"_q;
+ const QString InputField::kCustomDateTagStart = u"custom-date://"_q;
+ const int InputField::kCollapsedQuoteFormat = ::Ui::kCollapsedQuoteFormat;
+diff --git a/ui/widgets/fields/input_field.h b/ui/widgets/fields/input_field.h
+index b97e5a9..7c3ee7d 100644
+--- a/ui/widgets/fields/input_field.h
++++ b/ui/widgets/fields/input_field.h
+@@ -167,6 +167,10 @@ public:
+ 	static const QString kTagIvSubscript;
+ 	static const QString kTagIvSuperscript;
+ 	static const QString kTagIvMath;
++	static const QString kTagMargyDim;
++	static const QString kTagMargyOutline;
++	static const QString kTagMargyRainbow;
++	static const QString kTagMargySize;
+ 	static const QString kCustomEmojiTagStart;
+ 	static const QString kCustomDateTagStart;
+ 	static const int kCollapsedQuoteFormat; // QTextFormat::ObjectTypes

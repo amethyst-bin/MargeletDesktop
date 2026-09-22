@@ -1,6 +1,9 @@
 #include "margy/markup/margy_markup.h"
 #include "data/stickers/data_custom_emoji.h"
+#include "ui/widgets/fields/input_field.h"
+#include "ui/text/text_utilities.h"
 
+#include <QtCore/QRegularExpression>
 #include <vector>
 #include <algorithm>
 
@@ -150,7 +153,10 @@ std::vector<Run> Parse(const QString &text) {
 } // namespace
 
 bool Has(const QString &text) {
-	return text.contains(QChar(kOpen)) || text.contains(kHeader);
+	static const auto headerRegex = QRegularExpression(
+		u"<!\\s*Message looks better with"_q,
+		QRegularExpression::CaseInsensitiveOption);
+	return text.contains(QChar(kOpen)) || text.contains(headerRegex);
 }
 
 QString Open(int kind, int value, const QByteArray &payload) {
@@ -177,17 +183,14 @@ void Process(TextWithEntities &textWithEntities) {
 		return;
 	}
 
-	const auto headerIndex = textWithEntities.text.indexOf(kHeader);
-	if (headerIndex >= 0) {
-		int removeStart = headerIndex;
-		if (removeStart > 0 && textWithEntities.text[removeStart - 1] == '\n') {
-			--removeStart;
-		}
-		int removeEnd = headerIndex + kHeader.size();
-		if (removeEnd < textWithEntities.text.size() && textWithEntities.text[removeEnd] == '\n') {
-			++removeEnd;
-		}
-		const auto removedLen = removeEnd - removeStart;
+	static const auto headerRegex = QRegularExpression(
+		u"\\n?<!\\s*Message looks better with.*?\\!\\s*>\\n?"_q,
+		QRegularExpression::CaseInsensitiveOption);
+	const auto match = headerRegex.match(textWithEntities.text);
+	if (match.hasMatch()) {
+		const auto removeStart = match.capturedStart();
+		const auto removeEnd = match.capturedEnd();
+		const auto removedLen = match.capturedLength();
 		textWithEntities.text.remove(removeStart, removedLen);
 
 		for (auto it = textWithEntities.entities.begin(); it != textWithEntities.entities.end();) {
@@ -285,7 +288,132 @@ void Process(TextWithEntities &textWithEntities) {
 		}
 	}
 
+	ranges::sort(textWithEntities.entities, [](const EntityInText &a, const EntityInText &b) {
+		if (a.offset() != b.offset()) {
+			return a.offset() < b.offset();
+		}
+		if (a.length() != b.length()) {
+			return a.length() > b.length();
+		}
+		return a.type() < b.type();
+	});
+
+	textWithEntities.entities.erase(
+		std::unique(
+			textWithEntities.entities.begin(),
+			textWithEntities.entities.end(),
+			[](const EntityInText &a, const EntityInText &b) {
+				return a.offset() == b.offset()
+					&& a.length() == b.length()
+					&& a.type() == b.type()
+					&& a.data() == b.data();
+			}),
+		textWithEntities.entities.end());
+
 	textWithEntities.text = std::move(cleanText);
+}
+
+void EncodeForSending(TextWithTags &textWithTags) {
+	if (textWithTags.text.isEmpty() || textWithTags.tags.isEmpty()) {
+		return;
+	}
+
+	struct Insertion {
+		int pos = 0;
+		int order = 0;
+		int suborder = 0;
+		QString text;
+	};
+	std::vector<Insertion> insertions;
+
+	for (const auto &tag : textWithTags.tags) {
+		const auto list = TextUtilities::SplitTags(tag.id);
+		const auto start = std::max(0, tag.offset);
+		const auto end = std::min(int(textWithTags.text.size()), tag.offset + tag.length);
+		if (end <= start) {
+			continue;
+		}
+
+		for (const auto &single : list) {
+			auto kind = -1;
+			if (single == Ui::InputField::kTagMargyDim) {
+				kind = kKindDim;
+			} else if (single == Ui::InputField::kTagMargyOutline) {
+				kind = kKindOutline;
+			} else if (single == Ui::InputField::kTagMargyRainbow) {
+				kind = kKindRainbow;
+			} else if (single == Ui::InputField::kTagMargySize) {
+				kind = kKindSize;
+			}
+			if (kind >= 0) {
+				insertions.push_back(Insertion{
+					.pos = start,
+					.order = 1,
+					.suborder = -end,
+					.text = Open(kind, 0),
+				});
+				insertions.push_back(Insertion{
+					.pos = end,
+					.order = 0,
+					.suborder = -start,
+					.text = Close(),
+				});
+			}
+		}
+	}
+
+	if (insertions.empty()) {
+		return;
+	}
+
+	ranges::sort(insertions, [](const Insertion &a, const Insertion &b) {
+		if (a.pos != b.pos) {
+			return a.pos < b.pos;
+		}
+		if (a.order != b.order) {
+			return a.order < b.order;
+		}
+		return a.suborder < b.suborder;
+	});
+
+	const auto origSize = int(textWithTags.text.size());
+	std::vector<int> startMap(origSize + 1, 0);
+	std::vector<int> endMap(origSize + 1, 0);
+
+	QString newText;
+	newText.reserve(origSize + insertions.size() * 10 + 64);
+
+	auto insIt = insertions.begin();
+	for (int i = 0; i <= origSize; ++i) {
+		endMap[i] = newText.size();
+		while (insIt != insertions.end() && insIt->pos == i && insIt->order == 0) {
+			newText += insIt->text;
+			++insIt;
+		}
+		while (insIt != insertions.end() && insIt->pos == i && insIt->order == 1) {
+			newText += insIt->text;
+			++insIt;
+		}
+		startMap[i] = newText.size();
+		if (i < origSize) {
+			newText.push_back(textWithTags.text[i]);
+		}
+	}
+
+	if (!newText.contains(kHeader)) {
+		newText += u"\n"_q + kHeader;
+	}
+
+	for (auto &tag : textWithTags.tags) {
+		const auto start = std::clamp(tag.offset, 0, origSize);
+		const auto end = std::clamp(tag.offset + tag.length, 0, origSize);
+		const auto newStart = startMap[start];
+		const auto newEnd = endMap[end];
+		tag.offset = newStart;
+		tag.length = std::max(0, newEnd - newStart);
+	}
+
+	textWithTags.text = std::move(newText);
 }
 
 } // namespace Margy::Markup
