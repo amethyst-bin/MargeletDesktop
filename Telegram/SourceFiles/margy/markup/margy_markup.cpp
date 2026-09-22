@@ -6,9 +6,9 @@
 namespace Margy::Markup {
 namespace {
 
-constexpr QChar kOpen = 0x2060;
-constexpr QChar kClose = 0x2061;
-constexpr QChar kTrit = 0x2062;
+constexpr char16_t kOpen = 0x2060;
+constexpr char16_t kClose = 0x2061;
+constexpr char16_t kTrit = 0x2062;
 constexpr int kTrits = 3;
 
 constexpr int kKindTrits = 2;
@@ -28,7 +28,7 @@ constexpr int kByteTrits = 6;
 const auto kHeader = u"<! Message looks better with @margeletter! >"_q;
 
 inline bool IsTrit(QChar c) {
-	return c.unicode() >= kTrit.unicode() && c.unicode() < (kTrit.unicode() + kTrits);
+	return c.unicode() >= kTrit && c.unicode() < (kTrit + kTrits);
 }
 
 inline bool AllTrits(const QString &text, int from, int count) {
@@ -47,7 +47,7 @@ inline int DecodeNumber(const QString &text, int at, int count) {
 	int value = 0;
 	int mul = 1;
 	for (int i = 0; i < count; ++i) {
-		value += (text[at + i].unicode() - kTrit.unicode()) * mul;
+		value += (text[at + i].unicode() - kTrit) * mul;
 		mul *= kTrits;
 	}
 	return value;
@@ -86,7 +86,7 @@ std::vector<Run> Parse(const QString &text) {
 
 	for (int i = 0; i < text.size(); ++i) {
 		const auto c = text[i];
-		if (c == kOpen && i + kMarkLen <= text.size() && AllTrits(text, i + 1, kKindTrits + kValueTrits)) {
+		if (c.unicode() == kOpen && i + kMarkLen <= text.size() && AllTrits(text, i + 1, kKindTrits + kValueTrits)) {
 			const auto kind = DecodeNumber(text, i + 1, kKindTrits);
 			const auto value = DecodeNumber(text, i + 1 + kKindTrits, kValueTrits);
 			int after = i + kMarkLen;
@@ -113,7 +113,7 @@ std::vector<Run> Parse(const QString &text) {
 				.payload = std::move(payload),
 			});
 			i = after - 1;
-		} else if (c == kClose) {
+		} else if (c.unicode() == kClose) {
 			if (!stack.empty()) {
 				auto top = std::move(stack.back());
 				stack.pop_back();
@@ -133,7 +133,7 @@ std::vector<Run> Parse(const QString &text) {
 } // namespace
 
 bool Has(const QString &text) {
-	return text.contains(kOpen) || text.contains(kHeader);
+	return text.contains(QChar(kOpen)) || text.contains(kHeader);
 }
 
 void Process(TextWithEntities &textWithEntities) {
