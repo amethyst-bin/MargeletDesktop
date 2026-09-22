@@ -275,17 +275,16 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 			rectForName.setWidth(rectForName.width() - verifyWidth);
 		}
 		result += drawPremiumEmojiStatus(p, descriptor);
-		if (!paintVerify) {
-			return result;
+		if (paintVerify) {
+			rectForName.setWidth(rectForName.width() + verifyWidth);
+			descriptor.nameWidth += result;
 		}
-		rectForName.setWidth(rectForName.width() + verifyWidth);
-		descriptor.nameWidth += result;
 	} else if (_emojiStatus) {
 		_emojiStatus->painted = false;
 	}
 	if (paintVerify) {
 		result += drawVerifyCheck(p, descriptor);
-	} else if (paintStar) {
+	} else if (paintStar && !paintEmoji) {
 		result += drawPremiumStar(p, descriptor);
 	}
 
@@ -306,7 +305,6 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 		const auto skip = (result > 0) ? (st::dialogsScamSkip > 0 ? st::dialogsScamSkip : 4) : 0;
 		descriptor.nameWidth += result + skip;
 		result += skip + drawMargyBadge(p, descriptor, margyBadge->color);
-		return result;
 	}
 	return result;
 }

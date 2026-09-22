@@ -320,18 +320,18 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 		if (badge == BadgeType::Verified) {
 			badge = BadgeType::None;
 		}
-		if (statusOnlyForPremium && badge != BadgeType::Premium) {
-			emojiStatusId = EmojiStatusId();
-		} else if (emojiStatusId && badge == BadgeType::None) {
-			badge = BadgeType::Premium;
-		}
-		if (margyBadge.has_value() && badge == BadgeType::None) {
+		if (margyBadge.has_value()) {
 			return Badge::Content{
 				BadgeType::Margy,
 				emojiStatusId,
 				margyBadge->color,
 				bareId
 			};
+		}
+		if (statusOnlyForPremium && badge != BadgeType::Premium) {
+			emojiStatusId = EmojiStatusId();
+		} else if (emojiStatusId && badge == BadgeType::None) {
+			badge = BadgeType::Premium;
 		}
 		return Badge::Content{ badge, emojiStatusId };
 	});

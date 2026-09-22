@@ -4,7 +4,7 @@
 #include "margy/plugins/margy_plugin_manager.h"
 #include "margy/plugins/margy_plugin_host.h"
 #include "margy/margy_config.h"
-#include "boxes/abstract_box.h"
+#include "ui/layers/generic_box.h"
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/buttons.h"
@@ -22,30 +22,20 @@
 
 namespace Margy::Plugins::UI {
 
-void PluginsBox::Show(QWidget *parent) {
-	::Ui::show(::Box<PluginsBox>());
-}
+void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
+	box->setTitle(rpl::single(u"Плагины Margelet"_q));
+	box->setWidth(st::boxWideWidth);
 
-PluginsBox::PluginsBox(QWidget *parent) {
-}
-
-void PluginsBox::prepare() {
-	setTitle(rpl::single(u"Плагины Margelet"_q));
-	setDimensions(st::boxWideWidth, 480);
-
-	const auto content = setInnerWidget(
-		object_ptr<::Ui::VerticalLayout>(this));
-
-	// Top actions
-	const auto installBtn = content->add(
+	// Top action buttons
+	const auto installBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
-			content,
+			box,
 			rpl::single(u"➕ Установить из файла (.marp)"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	installBtn->setClickedCallback([=] {
 		const auto file = QFileDialog::getOpenFileName(
-			this,
+			box,
 			u"Выберите файл плагина"_q,
 			QString(),
 			u"Плагины Margelet (*.marp)"_q);
@@ -57,19 +47,19 @@ void PluginsBox::prepare() {
 		}
 	});
 
-	const auto consoleBtn = content->add(
+	const auto consoleBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
-			content,
+			box,
 			rpl::single(u"📋 Консоль плагинов"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	consoleBtn->setClickedCallback([=] {
-		PluginConsoleBox::Show(this);
+		PluginConsoleBox::Show(box);
 	});
 
-	const auto restartBtn = content->add(
+	const auto restartBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
-			content,
+			box,
 			rpl::single(u"🔄 Перезапустить плагины"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
@@ -77,112 +67,113 @@ void PluginsBox::prepare() {
 		Host::Instance().restart();
 	});
 
-	::Ui::AddSkip(content);
-	::Ui::AddDivider(content);
-	::Ui::AddSubsectionTitle(content, rpl::single(u"Установленные плагины"_q));
+	box->addRow(object_ptr<::Ui::DividerLabel>(box, rpl::single(QString())), st::boxRowPadding);
+	box->addRow(object_ptr<::Ui::FlatLabel>(box, u"Установленные плагины"_q, st::boxTitle), st::boxRowPadding);
 
-	_listContainer = content->add(object_ptr<::Ui::VerticalLayout>(content));
+	const auto listContainer = box->addRow(object_ptr<::Ui::VerticalLayout>(box));
+
+	const auto rebuildList = [=] {
+		listContainer->clear();
+
+		const auto plugins = Manager::Instance().installedPlugins();
+		if (plugins.empty()) {
+			listContainer->add(
+				object_ptr<::Ui::FlatLabel>(
+					listContainer,
+					u"Нет установленных плагинов.\nНажмите «Установить из файла (.marp)», чтобы добавить плагин."_q,
+					st::boxLabel),
+				st::settingsSendTypePadding,
+				style::al_center);
+			listContainer->resizeToWidth(box->width());
+			return;
+		}
+
+		for (const auto &p : plugins) {
+			const auto row = listContainer->add(
+				object_ptr<::Ui::VerticalLayout>(listContainer),
+				st::settingsSendTypePadding);
+
+			// Header row: Checkbox with name & version
+			const auto title = p.displayName()
+				+ u" (v"_q + p.version + u")"_q
+				+ (p.usesHooks ? u" ⚡ [Хуки]"_q : QString());
+
+			const auto isChecked = Manager::Instance().isEnabled(p.id);
+			const auto checkbox = row->add(
+				object_ptr<::Ui::Checkbox>(
+					row,
+					title,
+					isChecked,
+					st::settingsCheckbox));
+
+			checkbox->checkedChanges(
+			) | rpl::on_next([=, pluginId = p.id](bool checked) {
+				Manager::Instance().setEnabled(pluginId, checked);
+			}, row->lifetime());
+
+			if (!p.author.isEmpty()) {
+				row->add(
+					object_ptr<::Ui::FlatLabel>(
+						row,
+						u"Автор: "_q + p.author,
+						st::boxLabel),
+					QMargins(24, 2, 0, 0));
+			}
+
+			if (!p.displayDescription().isEmpty()) {
+				row->add(
+					object_ptr<::Ui::FlatLabel>(
+						row,
+						p.displayDescription(),
+						st::boxLabel),
+					QMargins(24, 2, 0, 4));
+			}
+
+			// Action buttons row
+			const auto btnWrap = row->add(
+				object_ptr<::Ui::FixedHeightWidget>(row, 36),
+				QMargins(24, 4, 0, 8));
+			const auto btnLayout = new QHBoxLayout(btnWrap);
+			btnLayout->setContentsMargins(0, 0, 0, 0);
+
+			if (Manager::Instance().hasSettings(p.id)) {
+				const auto settingsBtn = new ::Ui::RoundButton(
+					btnWrap,
+					rpl::single(u"Настройки"_q),
+					st::defaultBoxButton);
+				settingsBtn->setClickedCallback([=, pluginId = p.id] {
+					PluginSettingsBox::Show(box, pluginId);
+				});
+				btnLayout->addWidget(settingsBtn);
+			}
+
+			const auto deleteBtn = new ::Ui::RoundButton(
+				btnWrap,
+				rpl::single(u"Удалить"_q),
+				st::defaultBoxButton);
+			deleteBtn->setClickedCallback([=, pluginId = p.id] {
+				Manager::Instance().uninstallPlugin(pluginId);
+			});
+			btnLayout->addWidget(deleteBtn);
+			btnLayout->addStretch();
+
+			::Ui::AddDivider(listContainer);
+		}
+		listContainer->resizeToWidth(box->width());
+	};
 
 	Manager::Instance().pluginsUpdated(
 	) | rpl::on_next([=] {
 		rebuildList();
-	}, lifetime());
+	}, box->lifetime());
 
 	rebuildList();
 
-	addButton(rpl::single(u"Закрыть"_q), [=] { closeBox(); });
+	box->addButton(rpl::single(u"Закрыть"_q), [=] { box->closeBox(); });
 }
 
-void PluginsBox::rebuildList() {
-	if (!_listContainer) {
-		return;
-	}
-
-	_listContainer->clear();
-
-	const auto plugins = Manager::Instance().installedPlugins();
-	if (plugins.empty()) {
-		_listContainer->add(
-			object_ptr<::Ui::FlatLabel>(
-				_listContainer,
-				u"Нет установленных плагинов.\nНажмите «Установить из файла (.marp)», чтобы добавить плагин."_q,
-				st::boxLabel),
-			st::settingsSendTypePadding,
-			style::al_center);
-		return;
-	}
-
-	for (const auto &p : plugins) {
-		const auto row = _listContainer->add(
-			object_ptr<::Ui::VerticalLayout>(_listContainer),
-			st::settingsSendTypePadding);
-
-		// Header row: Checkbox with name & version
-		const auto title = p.displayName()
-			+ u" (v"_q + p.version + u")"_q
-			+ (p.usesHooks ? u" ⚡ [Хуки]"_q : QString());
-
-		const auto isChecked = Manager::Instance().isEnabled(p.id);
-		const auto checkbox = row->add(
-			object_ptr<::Ui::Checkbox>(
-				row,
-				title,
-				isChecked,
-				st::settingsCheckbox));
-
-		checkbox->checkedChanges(
-		) | rpl::on_next([=, pluginId = p.id](bool checked) {
-			Manager::Instance().setEnabled(pluginId, checked);
-		}, row->lifetime());
-
-		if (!p.author.isEmpty()) {
-			row->add(
-				object_ptr<::Ui::FlatLabel>(
-					row,
-					u"Автор: "_q + p.author,
-					st::boxLabel),
-				QMargins(24, 2, 0, 0));
-		}
-
-		if (!p.displayDescription().isEmpty()) {
-			row->add(
-				object_ptr<::Ui::FlatLabel>(
-					row,
-					p.displayDescription(),
-					st::boxLabel),
-				QMargins(24, 2, 0, 4));
-		}
-
-		// Action buttons row
-		const auto btnWrap = row->add(
-			object_ptr<::Ui::FixedHeightWidget>(row, 36),
-			QMargins(24, 4, 0, 8));
-		const auto btnLayout = new QHBoxLayout(btnWrap);
-		btnLayout->setContentsMargins(0, 0, 0, 0);
-
-		if (Manager::Instance().hasSettings(p.id)) {
-			const auto settingsBtn = new ::Ui::RoundButton(
-				btnWrap,
-				rpl::single(u"Настройки"_q),
-				st::defaultBoxButton);
-			settingsBtn->setClickedCallback([=, pluginId = p.id] {
-				PluginSettingsBox::Show(this, pluginId);
-			});
-			btnLayout->addWidget(settingsBtn);
-		}
-
-		const auto deleteBtn = new ::Ui::RoundButton(
-			btnWrap,
-			rpl::single(u"Удалить"_q),
-			st::defaultBoxButton);
-		deleteBtn->setClickedCallback([=, pluginId = p.id] {
-			Manager::Instance().uninstallPlugin(pluginId);
-		});
-		btnLayout->addWidget(deleteBtn);
-		btnLayout->addStretch();
-
-		::Ui::AddDivider(_listContainer);
-	}
+void PluginsBox::Show(QWidget *parent) {
+	::Ui::show(::Box(InitPluginsBox));
 }
 
 } // namespace Margy::Plugins::UI

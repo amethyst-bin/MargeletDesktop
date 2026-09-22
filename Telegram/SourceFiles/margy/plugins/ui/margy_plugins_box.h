@@ -1,26 +1,18 @@
 #pragma once
 
-#include "ui/layers/box_content.h"
+class QWidget;
 
 namespace Ui {
-class VerticalLayout;
+class GenericBox;
 } // namespace Ui
 
 namespace Margy::Plugins::UI {
 
-class PluginsBox final : public ::Ui::BoxContent {
+void InitPluginsBox(not_null<::Ui::GenericBox*> box);
+
+class PluginsBox final {
 public:
 	static void Show(QWidget *parent = nullptr);
-
-	PluginsBox(QWidget *parent = nullptr);
-
-protected:
-	void prepare() override;
-
-private:
-	void rebuildList();
-
-	::Ui::VerticalLayout *_listContainer = nullptr;
 };
 
 } // namespace Margy::Plugins::UI
