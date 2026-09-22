@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_message.h"
+#include <map>
 
 #include "api/api_suggest_post.h"
 #include "api/api_transcribes.h"
@@ -121,8 +122,10 @@ constexpr auto kMinWidthAppearDuration = crl::time(160);
 
 [[nodiscard]] ClickHandlerPtr MargyBadgeClickHandler(
 		const Margy::Badges::Badge &badge) {
-	static auto handlers = base::flat_map<QString, ClickHandlerPtr>();
-	const auto key = badge.id.isEmpty() ? badge.title : badge.id;
+	static auto handlers = std::map<int64_t, ClickHandlerPtr>();
+	const auto key = badge.peerId
+		? badge.peerId
+		: static_cast<int64_t>(badge.color.rgba());
 	auto it = handlers.find(key);
 	if (it == handlers.end()) {
 		it = handlers.emplace(
