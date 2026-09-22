@@ -4,6 +4,7 @@
 #include "margy/plugins/margy_plugin_manager.h"
 #include "margy/plugins/margy_plugin_host.h"
 #include "margy/margy_config.h"
+#include "boxes/abstract_box.h"
 #include "ui/layers/generic_box.h"
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
@@ -29,13 +30,13 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 	// Top action buttons
 	const auto installBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
-			box,
+			box.get(),
 			rpl::single(u"➕ Установить из файла (.marp)"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	installBtn->setClickedCallback([=] {
 		const auto file = QFileDialog::getOpenFileName(
-			box,
+			box.get(),
 			u"Выберите файл плагина"_q,
 			QString(),
 			u"Плагины Margelet (*.marp)"_q);
@@ -49,17 +50,17 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 
 	const auto consoleBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
-			box,
+			box.get(),
 			rpl::single(u"📋 Консоль плагинов"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	consoleBtn->setClickedCallback([=] {
-		PluginConsoleBox::Show(box);
+		PluginConsoleBox::Show(box.get());
 	});
 
 	const auto restartBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
-			box,
+			box.get(),
 			rpl::single(u"🔄 Перезапустить плагины"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
@@ -67,10 +68,10 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 		Host::Instance().restart();
 	});
 
-	box->addRow(object_ptr<::Ui::DividerLabel>(box, rpl::single(QString())), st::boxRowPadding);
-	box->addRow(object_ptr<::Ui::FlatLabel>(box, u"Установленные плагины"_q, st::boxTitle), st::boxRowPadding);
+	box->addRow(object_ptr<::Ui::DividerLabel>(box.get(), rpl::single(QString())), st::boxRowPadding);
+	box->addRow(object_ptr<::Ui::FlatLabel>(box.get(), u"Установленные плагины"_q, st::boxTitle), st::boxRowPadding);
 
-	const auto listContainer = box->addRow(object_ptr<::Ui::VerticalLayout>(box));
+	const auto listContainer = box->addRow(object_ptr<::Ui::VerticalLayout>(box.get()));
 
 	const auto rebuildList = [=] {
 		listContainer->clear();
@@ -142,7 +143,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 					rpl::single(u"Настройки"_q),
 					st::defaultBoxButton);
 				settingsBtn->setClickedCallback([=, pluginId = p.id] {
-					PluginSettingsBox::Show(box, pluginId);
+					PluginSettingsBox::Show(box.get(), pluginId);
 				});
 				btnLayout->addWidget(settingsBtn);
 			}

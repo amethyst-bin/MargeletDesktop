@@ -1,6 +1,7 @@
 #include "margy/badges/margy_badge_box.h"
 #include "margy/badges/margy_plane_3d.h"
 #include "margy/badges/margy_badge_manager.h"
+#include "boxes/abstract_box.h"
 #include "ui/layers/generic_box.h"
 #include "ui/widgets/labels.h"
 #include "lang/lang_keys.h"
@@ -21,14 +22,14 @@ void InitBadgeBox(not_null<::Ui::GenericBox*> box, const Badge &badge) {
 
 	// 3D Plane widget in center
 	const auto plane = box->addRow(
-		object_ptr<Plane3D>(box, badge.color));
+		object_ptr<Plane3D>(box.get(), badge.color));
 	plane->resize(st::boxWideWidth, 160);
 	plane->show();
 
 	// Description label
 	box->addRow(
 		object_ptr<::Ui::FlatLabel>(
-			box,
+			box.get(),
 			badge.about(isRu),
 			st::boxLabel),
 		st::boxRowPadding,
