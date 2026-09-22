@@ -125,11 +125,11 @@ void GradientBox::prepare() {
 		p.setPen(QColor(255, 255, 255, 50));
 		p.drawRoundedRect(r.adjusted(0, 0, -1, -1), 10, 10);
 
-		p.setFont(st::boxTitle.font);
+		p.setFont(st::boxTitle.style.font);
 		p.setPen(Qt::white);
 		p.drawText(r.adjusted(14, 12, -14, -12), Qt::AlignLeft | Qt::AlignTop, _enabled ? u"Превью градиента"_q : u"Градиент выключен"_q);
 
-		p.setFont(st::boxDividerLabel.font);
+		p.setFont(st::boxDividerLabel.style.font);
 		p.setPen(QColor(255, 255, 255, 200));
 		const auto hexText = _enabled ? QString(u"%1  →  %2"_q).arg(_first.name().toUpper()).arg(_second.name().toUpper()) : QString();
 		p.drawText(r.adjusted(14, 12, -14, -12), Qt::AlignLeft | Qt::AlignBottom, hexText);
