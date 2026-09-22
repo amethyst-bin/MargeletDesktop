@@ -2,6 +2,7 @@
 #include "margy/margy_config.h"
 #include "boxes/abstract_box.h"
 #include "chat_helpers/emoji_sets_manager.h"
+#include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
 #include "ui/widgets/labels.h"
 #include "ui/widgets/buttons.h"
@@ -73,8 +74,8 @@ void FontsBox::prepare() {
 			st::settingsButton),
 		st::boxRowPadding);
 	emojiBtn->setClickedCallback([=] {
-		if (const auto session = Core::App().activeSession()) {
-			::Ui::show(::Box<::Ui::Emoji::ManageSetsBox>(session));
+		if (const auto session = Core::App().maybePrimarySession()) {
+			::Ui::show(::Box<::Ui::Emoji::ManageSetsBox>(not_null{ session }));
 		}
 	});
 
