@@ -16,4 +16,8 @@ struct TagInfo {
 	const QString &dstPath,
 	const TagInfo &tags);
 
+[[nodiscard]] bool WriteTags(
+	const QString &filePath,
+	const TagInfo &tags);
+
 } // namespace Margy::Tags

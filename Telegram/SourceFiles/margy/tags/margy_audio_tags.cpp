@@ -124,4 +124,14 @@ bool WriteTags(
 	return true;
 }
 
+bool WriteTags(const QString &filePath, const TagInfo &tags) {
+	const auto tmpPath = filePath + u".tmp"_q;
+	if (WriteTags(filePath, tmpPath, tags)) {
+		QFile::remove(filePath);
+		return QFile::rename(tmpPath, filePath);
+	}
+	QFile::remove(tmpPath);
+	return false;
+}
+
 } // namespace Margy::Tags

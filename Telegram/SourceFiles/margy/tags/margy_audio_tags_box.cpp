@@ -100,7 +100,7 @@ void AudioTagsBox::prepare() {
 }
 
 void AudioTagsBox::apply() {
-	TagData data;
+	TagInfo data;
 	data.title = _title;
 	data.artist = _artist;
 	data.cover = _cover;
