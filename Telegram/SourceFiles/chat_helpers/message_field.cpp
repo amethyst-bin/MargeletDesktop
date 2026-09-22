@@ -625,7 +625,7 @@ auto InitMessageFieldHandlers(MessageFieldHandlersArgs &&args)
 			action->setCheckable(true);
 			action->setChecked(field->isMarkdownTagActive(tag));
 			QObject::connect(action, &QAction::triggered, field, [=] {
-				field->toggleSelectionMarkdown(tag);
+				field->toggleCurrentMarkdownTag(tag);
 			});
 			submenu->addAction(action);
 		};
