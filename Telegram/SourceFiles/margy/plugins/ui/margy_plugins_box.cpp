@@ -31,6 +31,7 @@ PluginsBox::PluginsBox(QWidget *parent) {
 
 void PluginsBox::prepare() {
 	setTitle(rpl::single(u"Плагины Margelet"_q));
+	setDimensions(st::boxWideWidth, 480);
 
 	const auto content = setInnerWidget(
 		object_ptr<::Ui::VerticalLayout>(this));

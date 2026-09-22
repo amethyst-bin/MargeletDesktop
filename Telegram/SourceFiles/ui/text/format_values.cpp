@@ -428,16 +428,14 @@ QString FormatPhone(QString phone) {
 		return QString();
 	}
 	if (phone.at(0) == '0') {
-		return phone;
+		return Margy::StreamerMode() ? Margy::Streamer::MaskPhone(phone) : phone;
 	}
 	phone = phone.remove(QChar::Space);
 	const auto formatted = Countries::Instance().format({
 		.phone = (phone.at(0) == '+') ? phone.mid(1) : phone,
 	}).formatted;
-	if (Margy::StreamerMode()) {
-		return Margy::Streamer::MaskPhone(formatted);
-	}
-	return formatted;
+	const auto result = formatted.isEmpty() ? phone : formatted;
+	return Margy::StreamerMode() ? Margy::Streamer::MaskPhone(result) : result;
 }
 
 QString FormatTTL(float64 ttl) {

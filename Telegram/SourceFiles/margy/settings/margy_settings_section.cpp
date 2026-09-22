@@ -14,6 +14,8 @@
 #include "margy/plugins/ui/margy_plugins_box.h"
 #include "margy/plugins/ui/margy_plugin_console_box.h"
 #include "settings/settings_common.h"
+#include "chat_helpers/emoji_sets_manager.h"
+#include "boxes/abstract_box.h"
 
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
@@ -47,20 +49,16 @@ void MargySettingsSection::setupContent() {
 	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
 
 	// 3D Header Widget
-	const auto planeWrap = content->add(
-		object_ptr<Ui::FixedHeightWidget>(content, 150));
-	const auto plane = Ui::CreateChild<Badges::Plane3D>(planeWrap, QColor(0x8D, 0xD1, 0xB0));
-	plane->resize(150, 150);
-	planeWrap->widthValue(
-	) | rpl::on_next([=](int w) {
-		plane->move((w - 150) / 2, 0);
-	}, planeWrap->lifetime());
+	const auto plane = content->add(
+		object_ptr<Badges::Plane3D>(content, QColor(0x8D, 0xD1, 0xB0)));
+	plane->resize(st::boxWideWidth, 150);
+	plane->show();
 
 	// Title and Version
 	content->add(
 		object_ptr<Ui::FlatLabel>(
 			content,
-			u"Margy Desktop v" + Config::Instance().version(),
+			u"Margelet Desktop v" + Config::Instance().version(),
 			st::boxTitle),
 		st::settingsSendTypePadding,
 		style::al_center);
@@ -69,7 +67,7 @@ void MargySettingsSection::setupContent() {
 	Ui::AddDivider(content);
 
 	// 1. Badges Section
-	Ui::AddSubsectionTitle(content, rpl::single(u"Бейджи сообщества Margy"_q));
+	Ui::AddSubsectionTitle(content, rpl::single(u"Бейджи сообщества Margelet"_q));
 
 	const auto galleryBtn = ::Settings::AddButtonWithIcon(
 		content,
@@ -94,9 +92,19 @@ void MargySettingsSection::setupContent() {
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
+	Ui::AddSkip(content);
 
 	// 2. Customization & Appearance
-	Ui::AddSubsectionTitle(content, rpl::single(u"Кастомизация и оформление"_q));
+	Ui::AddSubsectionTitle(content, rpl::single(u"Оформление и кастомизация"_q));
+
+	const auto fontsBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Эмодзи Шрифт"_q),
+		st::settingsButton,
+		{ &st::menuIconChatBubble, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x3B, 0x82, 0xF6)) });
+	fontsBtn->setClickedCallback([=] {
+		controller()->show(Box<Ui::Emoji::ManageSetsBox>(&controller()->session()));
+	});
 
 	const auto catsBtn = ::Settings::AddButtonWithIcon(
 		content,
@@ -105,15 +113,6 @@ void MargySettingsSection::setupContent() {
 		{ &st::menuIconStickers, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xEC, 0x48, 0x99)) });
 	catsBtn->setClickedCallback([=] {
 		Cats::CatsBox::Show(this);
-	});
-
-	const auto fontsBtn = ::Settings::AddButtonWithIcon(
-		content,
-		rpl::single(u"Шрифты интерфейса и эмодзи (Twemoji)..."_q),
-		st::settingsButton,
-		{ &st::menuIconChatBubble, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x3B, 0x82, 0xF6)) });
-	fontsBtn->setClickedCallback([=] {
-		Fonts::FontsBox::Show(this);
 	});
 
 	const auto gradBtn = ::Settings::AddButtonWithIcon(
@@ -196,6 +195,7 @@ void MargySettingsSection::setupContent() {
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
+	Ui::AddSkip(content);
 
 	// 3. Streamer Mode & Privacy
 	Ui::AddSubsectionTitle(content, rpl::single(u"Режим стримера и приватность"_q));
@@ -274,6 +274,7 @@ void MargySettingsSection::setupContent() {
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
+	Ui::AddSkip(content);
 
 	// 4. Plugins Margelet
 	Ui::AddSubsectionTitle(content, rpl::single(u"Плагины Margelet"_q));
@@ -322,6 +323,7 @@ void MargySettingsSection::setupContent() {
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
+	Ui::AddSkip(content);
 
 	// 5. Network, Sounds & Easter Eggs
 	Ui::AddSubsectionTitle(content, rpl::single(u"Сеть, звуки и пасхалки"_q));
@@ -377,9 +379,10 @@ void MargySettingsSection::setupContent() {
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
+	Ui::AddSkip(content);
 
 	// 6. Support & Community
-	Ui::AddSubsectionTitle(content, rpl::single(u"Поддержка и сообщество Margy"_q));
+	Ui::AddSubsectionTitle(content, rpl::single(u"Поддержка и сообщество Margelet"_q));
 
 	const auto donateBtn = ::Settings::AddButtonWithIcon(
 		content,

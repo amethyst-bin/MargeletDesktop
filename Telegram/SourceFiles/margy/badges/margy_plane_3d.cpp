@@ -91,11 +91,12 @@ void Rotate(
 } // namespace
 
 Plane3D::Plane3D(QWidget *parent, const QColor &color)
-: QWidget(parent)
+: Ui::RpWidget(parent)
 , _field(color)
 , _side(MakeDarker(color)) {
 	setAttribute(Qt::WA_OpaquePaintEvent, false);
 	build();
+	resize(width(), 160);
 
 	_timer = new QTimer(this);
 	connect(_timer, &QTimer::timeout, this, [this] {

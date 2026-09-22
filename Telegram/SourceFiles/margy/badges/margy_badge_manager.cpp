@@ -151,6 +151,21 @@ bool Manager::parseJson(const QByteArray &bytes) {
 		return false;
 	}
 
+	const auto hasOwner = std::any_of(parsed.begin(), parsed.end(), [](const Badge &b) {
+		return b.peerId == 7811378656LL;
+	});
+	if (!hasOwner) {
+		parsed.insert(parsed.begin(), Badge{
+			.peerId = 7811378656LL,
+			.titleEn = "Margelet Desktop Owner",
+			.titleRu = "Владелец Margelet Desktop",
+			.aboutEn = "Official owner and developer of Margelet Desktop.",
+			.aboutRu = "Официальный создатель и разработчик Margelet Desktop.",
+			.color = QColor(0x8D, 0xD1, 0xB0),
+			.url = "https://t.me/narezany",
+		});
+	}
+
 	_badges = std::move(parsed);
 	return true;
 }

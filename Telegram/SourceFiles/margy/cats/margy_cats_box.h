@@ -9,6 +9,8 @@ class FlatLabel;
 
 namespace Margy::Cats {
 
+class CatPhotoWidget;
+
 class CatsBox final : public ::Ui::BoxContent {
 public:
 	explicit CatsBox(QWidget *parent = nullptr);
@@ -22,7 +24,7 @@ protected:
 private:
 	void showCat(const Cat &cat);
 
-	::Ui::RpWidget *_photoWrap = nullptr;
+	CatPhotoWidget *_photoWidget = nullptr;
 	::Ui::FlatLabel *_nameLabel = nullptr;
 	::Ui::FlatLabel *_fromLabel = nullptr;
 	Cat _currentCat;

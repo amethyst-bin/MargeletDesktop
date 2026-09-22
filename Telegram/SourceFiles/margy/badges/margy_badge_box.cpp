@@ -43,14 +43,10 @@ void BadgeBox::prepare() {
 		object_ptr<::Ui::VerticalLayout>(this));
 
 	// 3D Plane widget in center
-	const auto planeWrap = content->add(
-		object_ptr<::Ui::FixedHeightWidget>(content, 160));
-	const auto plane = ::Ui::CreateChild<Plane3D>(planeWrap, _badge.color);
-	plane->resize(160, 160);
-	planeWrap->widthValue(
-	) | rpl::on_next([=](int w) {
-		plane->move((w - 160) / 2, 0);
-	}, planeWrap->lifetime());
+	const auto plane = content->add(
+		object_ptr<Plane3D>(content, _badge.color));
+	plane->resize(st::boxWideWidth, 160);
+	plane->show();
 
 	// Description label
 	content->add(

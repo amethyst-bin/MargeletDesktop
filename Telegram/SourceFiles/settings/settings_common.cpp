@@ -401,12 +401,19 @@ void Icon::paint(QPainter &p, int x, int y) const {
 		_icon->paint(p, { x, y }, 2 * x + _icon->width(), Qt::white);
 	} else if (_backgroundBrush) {
 		PainterHighQualityEnabler hq(p);
+		const auto iconRect = QRect(QPoint(x, y), _icon->size());
+		const auto radius = _backgroundBrush->first;
 		p.setPen(Qt::NoPen);
 		p.setBrush(_backgroundBrush->second);
-		p.drawRoundedRect(
-			QRect(QPoint(x, y), _icon->size()),
-			_backgroundBrush->first,
-			_backgroundBrush->first);
+		p.drawRoundedRect(iconRect, radius, radius);
+
+		QLinearGradient sheen(iconRect.topLeft(), iconRect.bottomLeft());
+		sheen.setColorAt(0.0, QColor(255, 255, 255, 80));
+		sheen.setColorAt(0.45, QColor(255, 255, 255, 10));
+		sheen.setColorAt(1.0, QColor(0, 0, 0, 25));
+		p.setBrush(sheen);
+		p.drawRoundedRect(iconRect, radius, radius);
+
 		_icon->paint(p, { x, y }, 2 * x + _icon->width(), Qt::white);
 	} else {
 		_icon->paint(p, { x, y }, 2 * x + _icon->width());

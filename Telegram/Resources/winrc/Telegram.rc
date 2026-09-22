@@ -34,8 +34,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Icon
 //
 
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
+// Official Margelet Desktop icon
 IDI_ICON1               ICON                    "..\\art\\icon256.ico"
 
 /////////////////////////////////////////////////////////////////////////////

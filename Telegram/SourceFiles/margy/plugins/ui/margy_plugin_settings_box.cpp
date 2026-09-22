@@ -27,6 +27,7 @@ void PluginSettingsBox::prepare() {
 	const auto p = Manager::Instance().plugin(_pluginId);
 	const auto name = p ? p->displayName() : _pluginId;
 	setTitle(rpl::single(name + u" — Настройки"_q));
+	setDimensions(st::boxWideWidth, 420);
 
 	const auto content = setInnerWidget(
 		object_ptr<::Ui::VerticalLayout>(this));

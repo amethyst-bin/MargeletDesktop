@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QWidget>
+#include "ui/rp_widget.h"
 #include <QColor>
 #include <vector>
 #include <array>
@@ -9,7 +9,7 @@ class QTimer;
 
 namespace Margy::Badges {
 
-class Plane3D final : public QWidget {
+class Plane3D final : public Ui::RpWidget {
 	Q_OBJECT
 
 public:

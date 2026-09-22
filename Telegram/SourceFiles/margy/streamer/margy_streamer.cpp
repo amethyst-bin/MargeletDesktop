@@ -12,8 +12,12 @@ QString MaskPhone(const QString &phone) {
 	for (const auto &ch : phone) {
 		if (ch.isDigit()) {
 			result.append(QChar(0x2022));
-		} else {
+		} else if (ch == '+' || ch == ' ' || ch == '-' || ch == '(' || ch == ')') {
 			result.append(ch);
+		} else if (ch == QChar(0x2022)) {
+			result.append(ch);
+		} else {
+			result.append(QChar(0x2022));
 		}
 	}
 	return result;

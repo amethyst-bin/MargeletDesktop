@@ -26,6 +26,7 @@ PluginConsoleBox::PluginConsoleBox(QWidget *parent) {
 
 void PluginConsoleBox::prepare() {
 	setTitle(rpl::single(u"Консоль плагинов Margelet"_q));
+	setDimensions(st::boxWideWidth, 460);
 
 	const auto content = setInnerWidget(
 		object_ptr<::Ui::VerticalLayout>(this));
@@ -36,6 +37,7 @@ void PluginConsoleBox::prepare() {
 	edit->setReadOnly(true);
 	edit->setGeometry(0, 0, textEdit->width(), 350);
 	edit->setStyleSheet(u"QPlainTextEdit { background-color: #1a1a1a; color: #e0e0e0; font-family: monospace; font-size: 11px; padding: 6px; border-radius: 4px; }"_q);
+	edit->show();
 
 	textEdit->widthValue(
 	) | rpl::on_next([=](int w) {
