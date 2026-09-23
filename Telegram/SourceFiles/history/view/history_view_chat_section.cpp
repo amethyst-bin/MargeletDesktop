@@ -2564,7 +2564,7 @@ void ChatWidget::sendTextWithTags(
 		peerId,
 		&cancelled);
 	if (cancelled) {
-		_composeControls->clearFieldText();
+		_composeControls->setText({});
 		return;
 	}
 
