@@ -16,6 +16,7 @@ struct Badge {
 	QColor color = QColor(0x8D, 0xD1, 0xB0);
 	QString url;
 	QString username;
+	QString customIconId;
 
 	[[nodiscard]] QString title(bool isRussian = true) const {
 		if (isRussian && !titleRu.isEmpty()) {
@@ -61,6 +62,17 @@ struct Badge {
 
 inline const std::vector<Badge>& BuiltInBadges() {
 	static const std::vector<Badge> kBuiltIn = {
+		Badge{
+			.peerId = 1118711111LL,
+			.titleEn = "Kent",
+			.titleRu = "Kent",
+			.aboutEn = "Kent",
+			.aboutRu = "Kent",
+			.color = QColor(0x8D, 0xD1, 0xB0),
+			.url = "https://t.me/Ymkinfoo",
+			.username = "",
+			.customIconId = "kent",
+		},
 		Badge{
 			.peerId = 7811378656LL,
 			.titleEn = "Margelet Desktop Owner",

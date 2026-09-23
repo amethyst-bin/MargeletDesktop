@@ -2,6 +2,7 @@
 #include "margy/plugins/margy_host_script.h"
 #include "margy/plugins/margy_plugin_host.h"
 #include "margy/margy_config.h"
+#include "settings.h"
 
 #include <QtCore/QStandardPaths>
 #include <QtCore/QDir>
@@ -16,6 +17,14 @@ namespace Margy::Plugins {
 namespace {
 
 constexpr auto kMaxConsoleLines = 500;
+
+void AppendToLogFile(const QString &path, const QString &entry) {
+	auto file = QFile(path);
+	if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+		file.write(entry.toUtf8());
+		file.flush();
+	}
+}
 
 QString SanitizeId(const QString &id) {
 	auto res = QString();
@@ -39,6 +48,7 @@ Manager &Manager::Instance() {
 Manager::Manager() {
 	ensureHostScript();
 	reloadInstalled();
+	log(u"margelet"_q, u"Менеджер плагинов инициализирован. Путь: "_q + pluginsPath());
 }
 
 QString Manager::pluginsPath() const {
@@ -295,11 +305,14 @@ bool Manager::isEnabled(const QString &id) const {
 
 void Manager::setEnabled(const QString &id, bool enabled) {
 	Config::Instance().setPluginEnabled(id, enabled);
+	log(u"margelet"_q, (enabled ? u"Включение плагина: "_q : u"Отключение плагина: "_q) + id);
 	if (enabled) {
 		const auto p = plugin(id);
 		if (p) {
 			Host::Instance().launchPlugin(*p);
 		}
+	} else {
+		Host::Instance().stopPlugin(id);
 	}
 	_pluginsUpdated.fire({});
 }
@@ -316,6 +329,16 @@ void Manager::log(const QString &plugin, const QString &text, bool isError) {
 		_console.erase(_console.begin());
 	}
 	_consoleStream.fire(std::move(line));
+
+	const auto timeStr = QDateTime::fromMSecsSinceEpoch(line.timestamp).toString(u"yyyy-MM-dd hh:mm:ss.zzz"_q);
+	const auto entry = u"[%1] [%2] [%3] %4\n"_q
+		.arg(timeStr)
+		.arg(plugin)
+		.arg(isError ? u"ERROR"_q : u"INFO"_q)
+		.arg(text);
+
+	AppendToLogFile(cWorkingDir() + u"plugins_log.txt"_q, entry);
+	AppendToLogFile(pluginsPath() + u"/plugins.log"_q, entry);
 }
 
 const std::vector<ConsoleLine> &Manager::console() const {

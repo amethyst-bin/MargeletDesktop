@@ -55,6 +55,7 @@ void Host::start() {
 
 void Host::stop() {
 	if (_process) {
+		Manager::Instance().log(u"margelet"_q, u"Остановка процесса плагинов"_q);
 		_process->disconnect();
 		_process->terminate();
 		if (!_process->waitForFinished(1000)) {
@@ -81,6 +82,7 @@ bool Host::isPluginRunning(const QString &id) const {
 
 void Host::initProcess() {
 	const auto pythonPath = findPython();
+	Manager::Instance().log(u"margelet"_q, u"Поиск Python: выбран путь "_q + pythonPath);
 	const auto hostScript = Manager::Instance().pluginsPath() + u"/margy_host.py"_q;
 	if (!QFileInfo::exists(hostScript)) {
 		Manager::Instance().log(u"margelet"_q, u"Скрипт margy_host.py не найден"_q, true);
@@ -120,12 +122,13 @@ void Host::initProcess() {
 
 	_process->start();
 	if (!_process->waitForStarted(3000)) {
-		Manager::Instance().log(u"margelet"_q, u"Не удалось запустить Python"_q, true);
+		Manager::Instance().log(u"margelet"_q, u"Не удалось запустить Python: "_q + pythonPath + u" ("_q + _process->errorString() + u")"_q, true);
 		_process = nullptr;
 		return;
 	}
 
 	_running = true;
+	Manager::Instance().log(u"margelet"_q, u"Процесс Python запущен (PID: "_q + QString::number(_process->processId()) + u")"_q);
 
 	// Prepare init message with enabled plugins
 	auto pluginsArray = QJsonArray();
@@ -238,6 +241,7 @@ void Host::processLine(const QString &line) {
 }
 
 void Host::launchPlugin(const PluginManifest &plugin) {
+	Manager::Instance().log(u"margelet"_q, u"Запуск плагина: "_q + plugin.name + u" ("_q + plugin.id + u")"_q);
 	if (!_running) {
 		start();
 		return;

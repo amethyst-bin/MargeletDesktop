@@ -22,7 +22,7 @@ void InitBadgeBox(not_null<::Ui::GenericBox*> box, const Badge &badge) {
 
 	// 3D Plane widget in center
 	const auto plane = box->addRow(
-		object_ptr<Plane3D>(box.get(), badge.color));
+		object_ptr<Plane3D>(box.get(), badge.color, badge.customIconId));
 	plane->resize(st::boxWideWidth, 160);
 	plane->show();
 

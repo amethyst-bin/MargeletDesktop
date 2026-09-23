@@ -2649,7 +2649,7 @@ void Message::paintFromName(
 			+ nameWidth
 			+ (statusWidth ? (statusWidth + 8) : 8);
 		const auto badgeY = trect.top() + (st::msgNameFont->height - 16) / 2;
-		Margy::Badges::PaintBadgeIcon(p, QRect(badgeX, badgeY, 16, 16), margyBadge->color);
+		Margy::Badges::PaintBadgeIcon(p, QRect(badgeX, badgeY, 16, 16), margyBadge->color, margyBadge->customIconId);
 	}
 	const auto skipWidth = nameWidth
 		+ (_fromNameStatus

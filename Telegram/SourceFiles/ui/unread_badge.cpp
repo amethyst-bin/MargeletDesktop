@@ -308,7 +308,7 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
 		const auto baseSkip = std::max(st::dialogsScamSkip, 4) + 4;
 		const auto skip = (result > 0) ? baseSkip : 4;
 		descriptor.nameWidth += result + skip;
-		result += skip + drawMargyBadge(p, descriptor, margyBadge->color);
+		result += skip + drawMargyBadge(p, descriptor, margyBadge->color, margyBadge->customIconId);
 	}
 	return result;
 }
@@ -417,7 +417,7 @@ int PeerBadge::drawPremiumStar(Painter &p, const Descriptor &descriptor) {
 	return iconw;
 }
 
-int PeerBadge::drawMargyBadge(Painter &p, const Descriptor &descriptor, const QColor &color) {
+int PeerBadge::drawMargyBadge(Painter &p, const Descriptor &descriptor, const QColor &color, const QString &customIconId) {
 	const auto iconw = descriptor.verified ? descriptor.verified->width() : (descriptor.premium ? descriptor.premium->width() : 16);
 	const auto iconh = descriptor.verified ? descriptor.verified->height() : (descriptor.premium ? descriptor.premium->height() : 16);
 	const auto rectForName = descriptor.rectForName;
@@ -425,7 +425,7 @@ int PeerBadge::drawMargyBadge(Painter &p, const Descriptor &descriptor, const QC
 	const auto x = rectForName.x() + std::min(nameWidth, rectForName.width() - iconw);
 	const auto y = rectForName.y() + (rectForName.height() - iconh) / 2;
 	const auto rect = QRect(x, y, iconw, iconh);
-	Margy::Badges::PaintBadgeIcon(p, rect, color);
+	Margy::Badges::PaintBadgeIcon(p, rect, color, customIconId);
 	return iconw;
 }
 

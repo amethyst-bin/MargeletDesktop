@@ -13,7 +13,7 @@ class Plane3D final : public Ui::RpWidget {
 	Q_OBJECT
 
 public:
-	explicit Plane3D(QWidget *parent = nullptr, const QColor &color = QColor(0x8D, 0xD1, 0xB0));
+	explicit Plane3D(QWidget *parent = nullptr, const QColor &color = QColor(0x8D, 0xD1, 0xB0), const QString &customIconId = QString());
 	~Plane3D() override;
 
 	void setColor(const QColor &color);
@@ -42,6 +42,7 @@ private:
 
 	QColor _field;
 	QColor _side;
+	QString _customIconId;
 	std::vector<Piece> _pieces;
 
 	float _angle = 0.0f;

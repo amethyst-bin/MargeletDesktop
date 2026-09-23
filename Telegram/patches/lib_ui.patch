@@ -17,6 +17,80 @@ index aa9c1b3..029346d 100644
  			} else if (IsRichFormattingTag(single)) {
  				if (single == Tags::kTagIvMarked) {
  					result.set(EntityType::Marked);
+diff --git a/ui/widgets/checkbox.cpp b/ui/widgets/checkbox.cpp
+index df0dc58..66e5111 100644
+--- a/ui/widgets/checkbox.cpp
++++ b/ui/widgets/checkbox.cpp
+@@ -84,37 +84,46 @@ void ToggleView::setStyle(const style::Toggle &st) {
+ }
+ 
+ void ToggleView::paint(QPainter &p, int left, int top, int outerWidth) {
+-	left += _st->border;
+-	top += _st->border;
+-
+ 	PainterHighQualityEnabler hq(p);
+-	auto toggled = currentAnimationValue();
+-	auto fullWidth = _st->diameter + _st->width;
+-	auto innerDiameter = _st->diameter - 2 * _st->shift;
+-	auto innerRadius = float64(innerDiameter) / 2.;
+-	auto toggleLeft = left + anim::interpolate(0, fullWidth - _st->diameter, toggled);
+-	auto bgRect = style::rtlrect(left + _st->shift, top + _st->shift, fullWidth - 2 * _st->shift, innerDiameter, outerWidth);
+-	auto fgRect = style::rtlrect(toggleLeft, top, _st->diameter, _st->diameter, outerWidth);
+-	auto fgBrush = anim::brush(_st->untoggledFg, _st->toggledFg, toggled);
+-
++	const auto toggled = currentAnimationValue();
++	const auto trackW = float64(2 * _st->border + _st->diameter + _st->width);
++	const auto trackH = float64(2 * _st->border + _st->diameter);
++
++	const auto trackMargin = 1.0;
++	const auto trackRect = QRectF(left + trackMargin, top + trackMargin, trackW - 2.0 * trackMargin, trackH - 2.0 * trackMargin);
++	const auto trackRadius = trackRect.height() / 2.0;
++
++	auto trackPen = QPen(anim::brush(_st->untoggledFg, _st->toggledFg, toggled), 2.0);
++	p.setPen(trackPen);
++	p.setBrush(anim::brush(_st->untoggledBg, _st->toggledFg, toggled));
++	p.drawRoundedRect(style::rtlrect(trackRect, outerWidth), trackRadius, trackRadius);
++
++	const auto H = trackRect.height();
++	const auto dOff = std::clamp(H * 0.45, 8.0, H - 6.0);
++	const auto dOn = std::clamp(H * 0.75, dOff + 2.0, H - 3.0);
++	const auto thumbDiameter = anim::interpolate(dOff, dOn, toggled);
++
++	const auto padOff = (H - dOff) / 2.0;
++	const auto padOn = (H - dOn) / 2.0;
++	const auto minX = trackRect.left() + padOff;
++	const auto maxX = trackRect.right() - padOn - dOn;
++	const auto thumbLeft = anim::interpolate(minX, maxX, toggled);
++	const auto thumbTop = trackRect.top() + (H - thumbDiameter) / 2.0;
++	const auto thumbRect = QRectF(thumbLeft, thumbTop, thumbDiameter, thumbDiameter);
++
++	const auto thumbBrush = anim::brush(_st->untoggledFg, _st->toggledBg, toggled);
+ 	p.setPen(Qt::NoPen);
+-	p.setBrush(fgBrush);
+-	p.drawRoundedRect(bgRect, innerRadius, innerRadius);
+-
+-	auto pen = anim::pen(_st->untoggledFg, _st->toggledFg, toggled);
+-	pen.setWidth(_st->border);
+-	p.setPen(pen);
+-	p.setBrush(anim::brush(_st->untoggledBg, _st->toggledBg, toggled));
+-	p.drawEllipse(fgRect);
++	p.setBrush(thumbBrush);
++	p.drawEllipse(style::rtlrect(thumbRect, outerWidth));
+ 
+ 	if (_locked || _st->xsize > 0) {
+ 		p.setPen(Qt::NoPen);
+-		p.setBrush(fgBrush);
++		p.setBrush(thumbBrush);
+ 		if (_locked) {
+ 			const auto color = anim::color(_st->untoggledFg, _st->toggledFg, toggled);
+-			_st->lockIcon.paint(p, toggleLeft, top, outerWidth, color);
++			_st->lockIcon.paint(p, int(thumbLeft), int(thumbTop), outerWidth, color);
+ 		} else {
+-			paintXV(p, toggleLeft, top, outerWidth, toggled, fgBrush);
++			paintXV(p, int(thumbLeft), int(thumbTop), outerWidth, toggled, thumbBrush);
+ 		}
+ 	}
+ }
 diff --git a/ui/widgets/fields/input_field.cpp b/ui/widgets/fields/input_field.cpp
 index e41f8df..d2de028 100644
 --- a/ui/widgets/fields/input_field.cpp

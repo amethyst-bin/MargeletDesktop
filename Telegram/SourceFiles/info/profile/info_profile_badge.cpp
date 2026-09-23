@@ -236,7 +236,7 @@ void Badge::setContent(Content content) {
 			Painter p(check);
 			const auto margyX = mainWidth + gap;
 			const auto margyY = (totalHeight - margySize) / 2;
-			Margy::Badges::PaintBadgeIcon(p, QRect(margyX, margyY, margySize, margySize), _content.margyColor);
+			Margy::Badges::PaintBadgeIcon(p, QRect(margyX, margyY, margySize, margySize), _content.margyColor, _content.margyCustomIconId);
 		}
 	}, _view->lifetime());
 
@@ -336,6 +336,7 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 				.margyColor = margyBadge ? margyBadge->color : QColor(),
 				.margyPeerId = bareId,
 				.margyUsername = peer->username(),
+				.margyCustomIconId = margyBadge ? margyBadge->customIconId : QString(),
 				.hasMargyBadge = margyBadge.has_value(),
 			};
 		}
@@ -353,6 +354,7 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 			.margyColor = margyBadge ? margyBadge->color : QColor(),
 			.margyPeerId = bareId,
 			.margyUsername = peer->username(),
+			.margyCustomIconId = margyBadge ? margyBadge->customIconId : QString(),
 			.hasMargyBadge = margyBadge.has_value(),
 		};
 	});

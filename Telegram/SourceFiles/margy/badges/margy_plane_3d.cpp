@@ -1,4 +1,5 @@
 #include "margy/badges/margy_plane_3d.h"
+#include "margy/badges/margy_badge_icons_data.h"
 #include "margy/seizure/margy_seizure.h"
 
 #include <QPainter>
@@ -90,10 +91,11 @@ void Rotate(
 
 } // namespace
 
-Plane3D::Plane3D(QWidget *parent, const QColor &color)
+Plane3D::Plane3D(QWidget *parent, const QColor &color, const QString &customIconId)
 : Ui::RpWidget(parent)
 , _field(color)
-, _side(MakeDarker(color)) {
+, _side(MakeDarker(color))
+, _customIconId(customIconId) {
 	setAttribute(Qt::WA_OpaquePaintEvent, false);
 	build();
 	resize(width(), 160);
@@ -128,6 +130,9 @@ QSize Plane3D::minimumSizeHint() const {
 
 void Plane3D::build() {
 	_pieces.clear();
+	if (_customIconId == u"kent"_q) {
+		return;
+	}
 	const auto ring = Outline();
 	const int n = static_cast<int>(ring.size());
 
@@ -255,6 +260,99 @@ void Plane3D::paintEvent(QPaintEvent *) {
 	const float cosT = static_cast<float>(std::cos(t));
 
 	std::array<float, 3> tmp{};
+
+	if (_customIconId == u"kent"_q) {
+		const auto img = GetKentBadgeImage();
+		if (img.isNull()) {
+			return;
+		}
+
+		p.setRenderHint(QPainter::SmoothPixmapTransform);
+
+		static const auto kBackImg = img.mirrored(true, false);
+		static const auto kEdgeImg = [&] {
+			auto edge = img;
+			for (int y = 0; y < edge.height(); ++y) {
+				auto line = reinterpret_cast<QRgb*>(edge.scanLine(y));
+				for (int x = 0; x < edge.width(); ++x) {
+					const auto a = qAlpha(line[x]);
+					if (a > 0) {
+						const auto r = qRed(line[x]) * 6 / 10;
+						const auto g = qGreen(line[x]) * 6 / 10;
+						const auto b = qBlue(line[x]) * 6 / 10;
+						line[x] = qRgba(r, g, b, a);
+					}
+				}
+			}
+			return edge;
+		}();
+
+		constexpr auto kSlices = 7;
+		constexpr auto kDepth = 0.14f;
+		constexpr auto kHalfImgSize = 1.05f;
+
+		struct SliceInfo {
+			int index = 0;
+			float z = 0.0f;
+			float camDist = 0.0f;
+		};
+		std::array<SliceInfo, kSlices> slices{};
+		for (int i = 0; i < kSlices; ++i) {
+			const auto z = -kDepth + 2.0f * kDepth * (float(i) / float(kSlices - 1));
+			Rotate(0.0f, 0.0f, z, sinA, cosA, sinT, cosT, tmp);
+			slices[i] = { i, z, kCamZ - tmp[2] };
+		}
+		std::sort(slices.begin(), slices.end(), [](const SliceInfo &a, const SliceInfo &b) {
+			return a.camDist > b.camDist;
+		});
+
+		Rotate(0.0f, 0.0f, 1.0f, sinA, cosA, sinT, cosT, tmp);
+		const auto frontFacing = (tmp[2] > 0.0f);
+
+		const auto imgW = float(img.width());
+		const auto imgH = float(img.height());
+		const auto srcQuad = QPolygonF{
+			QPointF(0.0, 0.0),
+			QPointF(imgW, 0.0),
+			QPointF(imgW, imgH),
+			QPointF(0.0, imgH)
+		};
+
+		for (const auto &slice : slices) {
+			const auto z = slice.z;
+			const std::array<float, 3> corners[4] = {
+				{ -kHalfImgSize, kHalfImgSize, z },
+				{ kHalfImgSize, kHalfImgSize, z },
+				{ kHalfImgSize, -kHalfImgSize, z },
+				{ -kHalfImgSize, -kHalfImgSize, z }
+			};
+
+			QPolygonF dstQuad;
+			dstQuad.reserve(4);
+			for (const auto &c : corners) {
+				Rotate(c[0], c[1], c[2], sinA, cosA, sinT, cosT, tmp);
+				const auto denom = std::max(kCamZ - tmp[2], 0.1f);
+				const auto sx = cx + tmp[0] * focal / denom;
+				const auto sy = cy - tmp[1] * focal / denom;
+				dstQuad.append(QPointF(sx, sy));
+			}
+
+			const auto &drawImg = (slice.index == kSlices - 1)
+				? (frontFacing ? img : kBackImg)
+				: (slice.index == 0)
+					? (frontFacing ? kBackImg : img)
+					: kEdgeImg;
+
+			QTransform xform;
+			if (QTransform::quadToQuad(srcQuad, dstQuad, xform)) {
+				p.save();
+				p.setTransform(xform, true);
+				p.drawImage(0, 0, drawImg);
+				p.restore();
+			}
+		}
+		return;
+	}
 
 	for (int pass = 0; pass < 2; ++pass) {
 		for (const auto &piece : _pieces) {

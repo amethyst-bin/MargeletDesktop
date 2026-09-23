@@ -21,6 +21,9 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
+#include <QtGui/QDesktopServices>
+#include <QtCore/QUrl>
+#include "settings.h"
 
 namespace Margy::Plugins::UI {
 
@@ -65,6 +68,20 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 		st::settingsSendTypePadding);
 	consoleBtn->setClickedCallback([=] {
 		PluginConsoleBox::Show(box.get());
+	});
+
+	const auto openLogBtn = box->addRow(
+		object_ptr<::Ui::SettingsButton>(
+			box.get(),
+			rpl::single(u"📄 Открыть файл логов (plugins_log.txt)"_q),
+			st::settingsButton),
+		st::settingsSendTypePadding);
+	openLogBtn->setClickedCallback([=] {
+		const auto logPath = cWorkingDir() + u"plugins_log.txt"_q;
+		if (!QFile::exists(logPath)) {
+			Manager::Instance().log(u"margelet"_q, u"Лог-файл создан"_q);
+		}
+		QDesktopServices::openUrl(QUrl::fromLocalFile(logPath));
 	});
 
 	const auto restartBtn = box->addRow(

@@ -57,6 +57,7 @@ public:
 		QColor margyColor;
 		int64_t margyPeerId = 0;
 		QString margyUsername;
+		QString margyCustomIconId;
 		bool hasMargyBadge = false;
 
 		friend inline bool operator==(const Content &, const Content &) = default;

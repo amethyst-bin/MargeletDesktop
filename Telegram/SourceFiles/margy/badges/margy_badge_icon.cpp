@@ -1,4 +1,5 @@
 #include "margy/badges/margy_badge_icon.h"
+#include "margy/badges/margy_badge_icons_data.h"
 
 #include <QPainterPath>
 #include <map>
@@ -7,12 +8,12 @@
 namespace Margy::Badges {
 namespace {
 
-using IconKey = std::tuple<QRgb, int, int>; // color, size, pixelRatio*100
+using IconKey = std::tuple<QRgb, int, int, QString>;
 std::map<IconKey, QPixmap> kIconCache;
 
 } // namespace
 
-QPixmap GenerateBadgeIcon(const QColor &color, int size, qreal devicePixelRatio) {
+QPixmap GenerateBadgeIcon(const QColor &color, int size, qreal devicePixelRatio, const QString &customIconId) {
 	if (size <= 0) {
 		size = 20;
 	}
@@ -21,7 +22,7 @@ QPixmap GenerateBadgeIcon(const QColor &color, int size, qreal devicePixelRatio)
 	}
 
 	const auto ratioInt = static_cast<int>(devicePixelRatio * 100);
-	const auto key = IconKey(color.rgb(), size, ratioInt);
+	const auto key = IconKey(color.rgb(), size, ratioInt, customIconId);
 	const auto it = kIconCache.find(key);
 	if (it != kIconCache.end()) {
 		return it->second;
@@ -31,6 +32,16 @@ QPixmap GenerateBadgeIcon(const QColor &color, int size, qreal devicePixelRatio)
 	QPixmap pixmap(pixelSize, pixelSize);
 	pixmap.fill(Qt::transparent);
 	pixmap.setDevicePixelRatio(devicePixelRatio);
+
+	if (customIconId == u"kent"_q) {
+		const auto img = GetKentBadgeImage();
+		QPainter p(&pixmap);
+		p.setRenderHint(QPainter::Antialiasing);
+		p.setRenderHint(QPainter::SmoothPixmapTransform);
+		p.drawImage(QRectF(0, 0, size, size), img);
+		kIconCache[key] = pixmap;
+		return pixmap;
+	}
 
 	{
 		QPainter p(&pixmap);
@@ -77,13 +88,13 @@ QPixmap GenerateBadgeIcon(const QColor &color, int size, qreal devicePixelRatio)
 	return pixmap;
 }
 
-void PaintBadgeIcon(QPainter &p, const QRect &rect, const QColor &color) {
+void PaintBadgeIcon(QPainter &p, const QRect &rect, const QColor &color, const QString &customIconId) {
 	if (rect.isEmpty()) {
 		return;
 	}
 	const auto size = std::min(rect.width(), rect.height());
 	const auto ratio = p.device() ? p.device()->devicePixelRatioF() : 1.0;
-	const auto icon = GenerateBadgeIcon(color, size, ratio);
+	const auto icon = GenerateBadgeIcon(color, size, ratio, customIconId);
 
 	const auto x = rect.x() + (rect.width() - size) / 2;
 	const auto y = rect.y() + (rect.height() - size) / 2;

@@ -7,6 +7,7 @@ target_sources(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_icon.h
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_icon.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_icons_data.h
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_plane_3d.h
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_plane_3d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/badges/margy_badge_box.h
