@@ -324,7 +324,7 @@ void Plane3D::paintEvent(QPaintEvent *) {
 		std::vector<SideFace> sides;
 		sides.reserve(4);
 
-		const auto baseEdgeColor = _color.isValid() ? _color.darker(150) : QColor(60, 70, 80);
+		const auto baseEdgeColor = _field.isValid() ? _field.darker(150) : QColor(60, 70, 80);
 
 		Rotate(0.0f, kHalfImgSize, 0.0f, sinA, cosA, sinT, cosT, tmp);
 		sides.push_back({
