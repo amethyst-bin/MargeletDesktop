@@ -15,6 +15,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_report.h"
 #include "api/api_sending.h"
 #include "margy/markup/margy_markup.h"
+#include "margy/plugins/margy_plugin_hooks.h"
+#include "margy/plugins/margy_snow_overlay.h"
 #include "api/api_send_progress.h"
 #include "api/api_unread_things.h"
 #include "base/random.h"
@@ -567,6 +569,7 @@ HistoryWidget::HistoryWidget(
 		return false;
 	});
 	InitMessageFieldFade(_field, st::historyComposeField.textBg);
+	Margy::Plugins::SnowOverlay::Attach(this);
 
 	setupFastButtonMode();
 	initAiButton();
@@ -3056,6 +3059,7 @@ void HistoryWidget::showHistory(
 	controller()->sendingAnimation().clear();
 	_topToast.hide(anim::type::instant);
 	_hiddenSenderTooltip.hide();
+	Margy::Plugins::Hooks::OnChatOpened(peerId.value);
 	if (_history) {
 		if (_peer->id == peerId) {
 			updateForwarding();
@@ -5803,6 +5807,17 @@ void HistoryWidget::sendTextWithTags(
 		Fn<void()> done) {
 	if (!options.scheduled) {
 		_cornerButtons.clearReplyReturns();
+	}
+
+	auto cancelled = false;
+	const auto peerId = _history ? _history->peer->id.value : 0;
+	textWithTags.text = Margy::Plugins::Hooks::OnSend(
+		textWithTags.text,
+		peerId,
+		&cancelled);
+	if (cancelled) {
+		clearFieldText();
+		return;
 	}
 
 	auto message = Api::MessageToSend(prepareSendAction(options));

@@ -4,14 +4,14 @@
 
 namespace Margy::Plugins::Hooks {
 
-QString OnSend(const QString &text, bool *outCancelled) {
+QString OnSend(const QString &text, int64_t chatId, bool *outCancelled) {
 	if (!Config::Instance().pluginsEnabled()) {
 		if (outCancelled) {
 			*outCancelled = false;
 		}
 		return text;
 	}
-	return Host::Instance().onSend(text, outCancelled);
+	return Host::Instance().onSend(text, chatId, outCancelled);
 }
 
 void OnMessage(const QString &text, int64_t dialogId, int32_t messageId, bool out) {

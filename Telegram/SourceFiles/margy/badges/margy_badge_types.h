@@ -63,6 +63,17 @@ struct Badge {
 inline const std::vector<Badge>& BuiltInBadges() {
 	static const std::vector<Badge> kBuiltIn = {
 		Badge{
+			.peerId = -1002313144366LL,
+			.titleEn = "Yoxi",
+			.titleRu = "Yoxi",
+			.aboutEn = "Yoxi",
+			.aboutRu = "Yoxi",
+			.color = QColor(0x8D, 0xD1, 0xB0),
+			.url = "",
+			.username = "",
+			.customIconId = "yoxi",
+		},
+		Badge{
 			.peerId = 1118711111LL,
 			.titleEn = "Kent",
 			.titleRu = "Kent",

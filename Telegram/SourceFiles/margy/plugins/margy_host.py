@@ -10,6 +10,7 @@ import json
 import math
 import os
 import sys
+import threading
 import time
 import traceback
 import types
@@ -25,6 +26,7 @@ _loaded = {}
 _settings_specs = {}
 _hooks_enabled = True
 _active_fields = {}
+_current_activity = None
 
 
 def send_ipc(obj):
@@ -99,12 +101,21 @@ class JavaPaint:
     def __init__(self, char_width=10.0, line_height=20.0):
         self._char_width = char_width
         self._line_height = line_height
+        self._color = -1
+        self._anti_alias = True
 
     def measureText(self, text):
         return float(len(text) * self._char_width)
 
     def getColor(self):
-        return -1
+        return self._color
+
+    def setAntiAlias(self, val):
+        self._anti_alias = bool(val)
+
+    def setARGB(self, a, r, g, b):
+        c = ((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF)
+        self._color = c - (1 << 32) if c >= (1 << 31) else c
 
 
 class JavaLayout:
@@ -232,6 +243,137 @@ class JavaEditTextBoldCursor:
         self.needs_anim = True
 
 
+class JavaBitmapConfig:
+    ARGB_8888 = 1
+
+
+class JavaBitmap:
+    Config = JavaBitmapConfig
+
+    def __init__(self, w, h):
+        self.width = w
+        self.height = h
+        self.particles = []
+
+    @staticmethod
+    def createBitmap(w, h, config=None):
+        return JavaBitmap(w, h)
+
+
+class JavaCanvas:
+    def __init__(self, bitmap):
+        self.bitmap = bitmap
+
+    def drawCircle(self, x, y, r, paint=None):
+        if self.bitmap is not None:
+            self.bitmap.particles.append({"x": float(x), "y": float(y), "r": float(r)})
+
+
+class JavaImageView:
+    def __init__(self, context=None):
+        self._context = context
+        self._parent = None
+
+    def setClickable(self, val): pass
+    def setFocusable(self, val): pass
+    def setFocusableInTouchMode(self, val): pass
+    def setBackgroundColor(self, color): pass
+
+    def setImageBitmap(self, bitmap):
+        if bitmap is not None:
+            send_ipc({"op": "snow_frame", "particles": bitmap.particles})
+
+    def getParent(self):
+        return self._parent
+
+
+class JavaLayoutParams:
+    MATCH_PARENT = -1
+    WRAP_CONTENT = -2
+
+    def __init__(self, w, h):
+        self.width = w
+        self.height = h
+
+
+class JavaViewGroup:
+    def __init__(self, w=1200, h=800):
+        self._width = w
+        self._height = h
+        self._children = []
+
+    def getWidth(self):
+        return self._width
+
+    def getHeight(self):
+        return self._height
+
+    def addView(self, view, params=None):
+        if view not in self._children:
+            self._children.append(view)
+            view._parent = self
+
+    def removeView(self, view):
+        if view in self._children:
+            self._children.remove(view)
+            view._parent = None
+            send_ipc({"op": "snow_frame", "particles": []})
+
+
+class JavaActivity:
+    def __init__(self, chat_id=0, w=1200, h=800):
+        self.chat_id = chat_id
+        self._root = JavaViewGroup(w, h)
+
+    def getFragmentView(self):
+        return self._root
+
+    def getContentView(self):
+        return self._root
+
+    def getContext(self):
+        return self
+
+
+class JavaLooper:
+    @staticmethod
+    def getMainLooper():
+        return object()
+
+
+class JavaHandler:
+    def __init__(self, looper=None):
+        self._lock = threading.Lock()
+        self._tasks = {}
+
+    def post(self, runnable):
+        self.postDelayed(runnable, 0)
+
+    def postDelayed(self, runnable, delay_ms):
+        def fire():
+            with self._lock:
+                self._tasks.pop(id(runnable), None)
+            if hasattr(runnable, "run"):
+                runnable.run()
+            elif callable(runnable):
+                runnable()
+
+        with self._lock:
+            old_t = self._tasks.pop(id(runnable), None)
+            if old_t:
+                old_t.cancel()
+            t = threading.Timer(max(0.001, delay_ms / 1000.0), fire)
+            t.daemon = True
+            self._tasks[id(runnable)] = t
+            t.start()
+
+    def removeCallbacks(self, runnable):
+        with self._lock:
+            t = self._tasks.pop(id(runnable), None)
+            if t:
+                t.cancel()
+
+
 class MethodHookParam:
     def __init__(self, this_obj=None, args=None):
         self.thisObject = this_obj
@@ -269,6 +411,24 @@ class JavaModule:
             return JavaGradientDrawable
         if name == "org.telegram.ui.Components.EditTextBoldCursor":
             return JavaEditTextBoldCursor
+        if name == "android.view.ViewGroup":
+            return JavaViewGroup
+        if name == "android.widget.ImageView":
+            return JavaImageView
+        if name == "android.graphics.Bitmap":
+            return JavaBitmap
+        if name == "android.graphics.Canvas":
+            return JavaCanvas
+        if name == "android.graphics.Paint":
+            return JavaPaint
+        if name in ("android.view.ViewGroup$LayoutParams", "android.view.ViewGroup.LayoutParams"):
+            return JavaLayoutParams
+        if name == "android.os.Handler":
+            return JavaHandler
+        if name == "android.os.Looper":
+            return JavaLooper
+        if name == "java.lang.Runnable":
+            return object
         if name == "org.telegram.margelet.MargeletPluginHost":
             return HostProxy
         if name == "org.telegram.margelet.MargeletHooks":
@@ -447,11 +607,10 @@ class Margelet:
                 call(res)
             except Exception:
                 self.error(traceback.format_exc())
-        import threading
         threading.Thread(target=worker, daemon=True).start()
 
     def activity(self):
-        return None
+        return _current_activity
 
     def window(self, title, view):
         pass
@@ -630,10 +789,21 @@ def handle_input_step(field_id):
 
 def emit_anim_frame(field):
     sparks = []
+    cursor_x = 0.0
+    cursor_y = 0.0
+    cursor_h = 0.0
+    cursor_active = not field.cursor_visible
+
     for d in list(field.overlay.drawables):
         b = d.bounds
         w = b[2] - b[0]
         h = b[3] - b[1]
+        if getattr(d, 'shape', 0) == JavaGradientDrawable.RECTANGLE or w <= 4:
+            cursor_x = b[0]
+            cursor_y = b[1]
+            cursor_h = h
+            cursor_active = True
+            continue
         cx = b[0] + w * 0.5
         cy = b[1] + h * 0.5
         r = max(1.0, max(w, h) * 0.5)
@@ -643,18 +813,24 @@ def emit_anim_frame(field):
         alpha = float(d.alpha) / 255.0
         sparks.append({"x": cx, "y": cy, "r": r, "color": color, "alpha": alpha})
 
-    cursor_info = {"visible": field.cursor_visible, "active": not field.cursor_visible}
+    cursor_info = {
+        "visible": field.cursor_visible,
+        "active": cursor_active,
+        "x": cursor_x,
+        "y": cursor_y,
+        "height": cursor_h
+    }
     send_ipc({
         "op": "anim_frame",
         "field_id": field.field_id,
-        "active": field.needs_anim or len(sparks) > 0,
+        "active": field.needs_anim or len(sparks) > 0 or cursor_active,
         "sparks": sparks,
         "cursor": cursor_info
     })
 
 
 def main():
-    global _hooks_enabled
+    global _hooks_enabled, _current_activity
     send_ipc({"op": "ready", "python_version": sys.version})
 
     while True:
@@ -700,13 +876,20 @@ def main():
 
         elif cmd == "send":
             text = msg.get("text", "")
+            chat_id = msg.get("chat_id", 0)
             req_id = msg.get("req_id")
             cancelled = False
             for p in list(_plugins.values()):
                 p._cancel_send = False
                 for cb in list(p._on_send):
                     try:
-                        res = cb(text)
+                        import inspect
+                        sig = inspect.signature(cb)
+                        params = list(sig.parameters.values())
+                        if len(params) >= 2:
+                            res = cb(text, chat_id)
+                        else:
+                            res = cb(text)
                         if res is False or p._cancel_send:
                             cancelled = True
                             break
@@ -719,13 +902,30 @@ def main():
             send_ipc({"op": "send_res", "req_id": req_id, "text": text, "cancelled": cancelled})
 
         elif cmd == "chat_opened":
-            chat_id = msg.get("chat_id")
+            chat_id = msg.get("chat_id", 0)
+            w = int(msg.get("width", 1200))
+            h = int(msg.get("height", 800))
+            activity = JavaActivity(chat_id, w, h)
+            _current_activity = activity
             for p in list(_plugins.values()):
                 for cb in list(p._on_chat_opened):
                     try:
-                        cb(chat_id)
+                        import inspect
+                        sig = inspect.signature(cb)
+                        params = list(sig.parameters.values())
+                        if len(params) >= 1:
+                            cb(activity)
+                        else:
+                            cb()
                     except Exception:
                         p.error(traceback.format_exc())
+
+        elif cmd == "chat_resize":
+            w = int(msg.get("width", 1200))
+            h = int(msg.get("height", 800))
+            if _current_activity is not None:
+                _current_activity._root._width = w
+                _current_activity._root._height = h
 
         elif cmd == "input_change":
             handle_input_change(

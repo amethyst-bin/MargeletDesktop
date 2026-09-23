@@ -1,6 +1,13 @@
 #include "margy/plugins/margy_plugin_host.h"
 #include "margy/plugins/margy_plugin_manager.h"
 #include "margy/margy_config.h"
+#include "core/application.h"
+#include "window/window_controller.h"
+#include "window/window_session_controller.h"
+#include "main/main_session.h"
+#include "data/data_session.h"
+#include "apiwrap.h"
+#include "history/history.h"
 
 #include <QtCore/QProcess>
 #include <QtCore/QFileInfo>
@@ -9,6 +16,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
 #include <QtCore/QStandardPaths>
+#include <chrono>
 
 namespace Margy::Plugins {
 
@@ -233,10 +241,59 @@ void Host::processLine(const QString &line) {
 		const auto cursorObj = obj[u"cursor"_q].toObject();
 		frame.cursor.visible = cursorObj[u"visible"_q].toBool();
 		frame.cursor.active = cursorObj[u"active"_q].toBool();
+		frame.cursor.x = float(cursorObj[u"x"_q].toDouble());
+		frame.cursor.y = float(cursorObj[u"y"_q].toDouble());
+		frame.cursor.height = float(cursorObj[u"height"_q].toDouble());
 
 		_lastFrames[fieldId] = frame;
 		_lastFieldId = fieldId;
 		_typingStream.fire(std::move(frame));
+	} else if (op == u"send_res"_q) {
+		const auto reqId = uint64_t(obj[u"req_id"_q].toDouble());
+		if (reqId == _pendingSendReqId) {
+			_pendingSendResult = obj[u"text"_q].toString();
+			_pendingSendCancelled = obj[u"cancelled"_q].toBool();
+			_pendingSendDone = true;
+		}
+	} else if (op == u"toast"_q) {
+		const auto text = obj[u"text"_q].toString();
+		const auto controller = Core::App().activePrimaryWindow()
+			? Core::App().activePrimaryWindow()->sessionController()
+			: Core::App().activeWindow()
+			? Core::App().activeWindow()->sessionController()
+			: nullptr;
+		if (controller) {
+			controller->showToast(text);
+		}
+	} else if (op == u"send_msg"_q) {
+		const auto text = obj[u"text"_q].toString();
+		const auto chatId = int64_t(obj[u"chat"_q].toVariant().toLongLong());
+		const auto controller = Core::App().activePrimaryWindow()
+			? Core::App().activePrimaryWindow()->sessionController()
+			: Core::App().activeWindow()
+			? Core::App().activeWindow()->sessionController()
+			: nullptr;
+		if (controller && chatId != 0) {
+			const auto peerId = PeerId(chatId);
+			if (const auto history = controller->session().data().history(peerId)) {
+				auto message = Api::MessageToSend(Api::SendAction(history));
+				message.textWithTags = { text, {} };
+				controller->session().api().sendMessage(std::move(message));
+			}
+		}
+	} else if (op == u"snow_frame"_q) {
+		const auto particlesArray = obj[u"particles"_q].toArray();
+		auto particles = std::vector<SnowParticle>();
+		particles.reserve(particlesArray.size());
+		for (const auto &val : particlesArray) {
+			const auto pObj = val.toObject();
+			auto p = SnowParticle();
+			p.x = float(pObj[u"x"_q].toDouble());
+			p.y = float(pObj[u"y"_q].toDouble());
+			p.r = float(pObj[u"r"_q].toDouble());
+			particles.push_back(p);
+		}
+		_snowStream.fire(std::move(particles));
 	}
 }
 
@@ -279,12 +336,49 @@ void Host::chatOpened(int64_t chatId) {
 	sendCommand(QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
 }
 
-QString Host::onSend(const QString &text, bool *outCancelled) {
+QString Host::onSend(const QString &text, int64_t chatId, bool *outCancelled) {
 	if (outCancelled) {
 		*outCancelled = false;
 	}
-	// Synchronous dispatch is optional; currently pass-through
-	return text;
+	if (!_running || !_process || _process->state() != QProcess::Running) {
+		return text;
+	}
+	const auto reqId = ++_sendReqIdCounter;
+	auto obj = QJsonObject();
+	obj[u"cmd"_q] = u"send"_q;
+	obj[u"req_id"_q] = double(reqId);
+	obj[u"text"_q] = text;
+	obj[u"chat_id"_q] = double(chatId);
+	sendCommand(QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
+
+	_pendingSendReqId = reqId;
+	_pendingSendResult = text;
+	_pendingSendCancelled = false;
+	_pendingSendDone = false;
+
+	const auto start = std::chrono::steady_clock::now();
+	while (!_pendingSendDone && _process && _process->state() == QProcess::Running) {
+		if (_process->waitForReadyRead(50)) {
+			while (_process && _process->canReadLine()) {
+				const auto line = QString::fromUtf8(_process->readLine()).trimmed();
+				if (!line.isEmpty()) {
+					processLine(line);
+				}
+			}
+		}
+		const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now() - start).count();
+		if (elapsed >= 300) {
+			break;
+		}
+	}
+
+	if (outCancelled) {
+		*outCancelled = _pendingSendCancelled;
+	}
+	const auto res = _pendingSendResult;
+	_pendingSendReqId = 0;
+	return res;
 }
 
 void Host::onMessage(const QString &text, int64_t dialogId, int32_t messageId, bool out) {
@@ -353,8 +447,23 @@ void Host::onInputStep(const QString &fieldId) {
 	sendCommand(QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
 }
 
+void Host::onChatResize(int width, int height) {
+	if (!_running) {
+		return;
+	}
+	auto obj = QJsonObject();
+	obj[u"cmd"_q] = u"chat_resize"_q;
+	obj[u"width"_q] = width;
+	obj[u"height"_q] = height;
+	sendCommand(QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
+}
+
 rpl::producer<TypingAnimFrame> Host::typingAnimation(const QString &fieldId) {
 	return _typingStream.events();
+}
+
+rpl::producer<std::vector<SnowParticle>> Host::snowAnimation() {
+	return _snowStream.events();
 }
 
 bool Host::unpackArchive(const QString &archivePath, const QString &targetDir) {

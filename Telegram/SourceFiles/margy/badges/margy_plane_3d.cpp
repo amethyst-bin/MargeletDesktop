@@ -261,50 +261,48 @@ void Plane3D::paintEvent(QPaintEvent *) {
 
 	std::array<float, 3> tmp{};
 
-	if (_customIconId == u"kent"_q) {
-		const auto img = GetKentBadgeImage();
+	if (_customIconId == u"kent"_q || _customIconId == u"yoxi"_q) {
+		const auto img = (_customIconId == u"kent"_q)
+			? GetKentBadgeImage()
+			: GetYoxiBadgeImage();
 		if (img.isNull()) {
 			return;
 		}
 
 		p.setRenderHint(QPainter::SmoothPixmapTransform);
 
-		static const auto kBackImg = img.mirrored(true, false);
-		static const auto kEdgeImg = [&] {
-			auto edge = img;
-			for (int y = 0; y < edge.height(); ++y) {
-				auto line = reinterpret_cast<QRgb*>(edge.scanLine(y));
-				for (int x = 0; x < edge.width(); ++x) {
-					const auto a = qAlpha(line[x]);
-					if (a > 0) {
-						const auto r = qRed(line[x]) * 6 / 10;
-						const auto g = qGreen(line[x]) * 6 / 10;
-						const auto b = qBlue(line[x]) * 6 / 10;
-						line[x] = qRgba(r, g, b, a);
-					}
-				}
-			}
-			return edge;
-		}();
+		const auto kBackImg = img.mirrored(true, false);
 
-		constexpr auto kSlices = 7;
-		constexpr auto kDepth = 0.14f;
+		constexpr auto kDepth = 0.08f;
 		constexpr auto kHalfImgSize = 1.05f;
 
-		struct SliceInfo {
-			int index = 0;
-			float z = 0.0f;
-			float camDist = 0.0f;
+		const std::array<float, 3> frontCorners[4] = {
+			{ -kHalfImgSize, kHalfImgSize, kDepth },
+			{ kHalfImgSize, kHalfImgSize, kDepth },
+			{ kHalfImgSize, -kHalfImgSize, kDepth },
+			{ -kHalfImgSize, -kHalfImgSize, kDepth }
 		};
-		std::array<SliceInfo, kSlices> slices{};
-		for (int i = 0; i < kSlices; ++i) {
-			const auto z = -kDepth + 2.0f * kDepth * (float(i) / float(kSlices - 1));
-			Rotate(0.0f, 0.0f, z, sinA, cosA, sinT, cosT, tmp);
-			slices[i] = { i, z, kCamZ - tmp[2] };
+		const std::array<float, 3> backCorners[4] = {
+			{ -kHalfImgSize, kHalfImgSize, -kDepth },
+			{ kHalfImgSize, kHalfImgSize, -kDepth },
+			{ kHalfImgSize, -kHalfImgSize, -kDepth },
+			{ -kHalfImgSize, -kHalfImgSize, -kDepth }
+		};
+
+		QPolygonF frontQuad, backQuad;
+		frontQuad.reserve(4);
+		backQuad.reserve(4);
+
+		for (const auto &c : frontCorners) {
+			Rotate(c[0], c[1], c[2], sinA, cosA, sinT, cosT, tmp);
+			const auto denom = std::max(kCamZ - tmp[2], 0.1f);
+			frontQuad.append(QPointF(cx + tmp[0] * focal / denom, cy - tmp[1] * focal / denom));
 		}
-		std::sort(slices.begin(), slices.end(), [](const SliceInfo &a, const SliceInfo &b) {
-			return a.camDist > b.camDist;
-		});
+		for (const auto &c : backCorners) {
+			Rotate(c[0], c[1], c[2], sinA, cosA, sinT, cosT, tmp);
+			const auto denom = std::max(kCamZ - tmp[2], 0.1f);
+			backQuad.append(QPointF(cx + tmp[0] * focal / denom, cy - tmp[1] * focal / denom));
+		}
 
 		Rotate(0.0f, 0.0f, 1.0f, sinA, cosA, sinT, cosT, tmp);
 		const auto frontFacing = (tmp[2] > 0.0f);
@@ -318,38 +316,81 @@ void Plane3D::paintEvent(QPaintEvent *) {
 			QPointF(0.0, imgH)
 		};
 
-		for (const auto &slice : slices) {
-			const auto z = slice.z;
-			const std::array<float, 3> corners[4] = {
-				{ -kHalfImgSize, kHalfImgSize, z },
-				{ kHalfImgSize, kHalfImgSize, z },
-				{ kHalfImgSize, -kHalfImgSize, z },
-				{ -kHalfImgSize, -kHalfImgSize, z }
-			};
+		struct SideFace {
+			QPolygonF poly;
+			float camDist = 0.0f;
+			QColor color;
+		};
+		std::vector<SideFace> sides;
+		sides.reserve(4);
 
-			QPolygonF dstQuad;
-			dstQuad.reserve(4);
-			for (const auto &c : corners) {
-				Rotate(c[0], c[1], c[2], sinA, cosA, sinT, cosT, tmp);
-				const auto denom = std::max(kCamZ - tmp[2], 0.1f);
-				const auto sx = cx + tmp[0] * focal / denom;
-				const auto sy = cy - tmp[1] * focal / denom;
-				dstQuad.append(QPointF(sx, sy));
-			}
+		const auto baseEdgeColor = _color.isValid() ? _color.darker(150) : QColor(60, 70, 80);
 
-			const auto &drawImg = (slice.index == kSlices - 1)
-				? (frontFacing ? img : kBackImg)
-				: (slice.index == 0)
-					? (frontFacing ? kBackImg : img)
-					: kEdgeImg;
+		Rotate(0.0f, kHalfImgSize, 0.0f, sinA, cosA, sinT, cosT, tmp);
+		sides.push_back({
+			QPolygonF{ frontQuad[0], frontQuad[1], backQuad[1], backQuad[0] },
+			kCamZ - tmp[2],
+			baseEdgeColor.lighter(110)
+		});
+		Rotate(kHalfImgSize, 0.0f, 0.0f, sinA, cosA, sinT, cosT, tmp);
+		sides.push_back({
+			QPolygonF{ frontQuad[1], frontQuad[2], backQuad[2], backQuad[1] },
+			kCamZ - tmp[2],
+			baseEdgeColor.darker(110)
+		});
+		Rotate(0.0f, -kHalfImgSize, 0.0f, sinA, cosA, sinT, cosT, tmp);
+		sides.push_back({
+			QPolygonF{ frontQuad[2], frontQuad[3], backQuad[3], backQuad[2] },
+			kCamZ - tmp[2],
+			baseEdgeColor.darker(130)
+		});
+		Rotate(-kHalfImgSize, 0.0f, 0.0f, sinA, cosA, sinT, cosT, tmp);
+		sides.push_back({
+			QPolygonF{ frontQuad[3], frontQuad[0], backQuad[0], backQuad[3] },
+			kCamZ - tmp[2],
+			baseEdgeColor
+		});
 
+		std::sort(sides.begin(), sides.end(), [](const SideFace &a, const SideFace &b) {
+			return a.camDist > b.camDist;
+		});
+
+		const auto drawFront = [&] {
 			QTransform xform;
-			if (QTransform::quadToQuad(srcQuad, dstQuad, xform)) {
+			if (QTransform::quadToQuad(srcQuad, frontQuad, xform)) {
 				p.save();
 				p.setTransform(xform, true);
-				p.drawImage(0, 0, drawImg);
+				p.drawImage(0, 0, img);
 				p.restore();
 			}
+		};
+
+		const auto drawBack = [&] {
+			QTransform xform;
+			if (QTransform::quadToQuad(srcQuad, backQuad, xform)) {
+				p.save();
+				p.setTransform(xform, true);
+				p.drawImage(0, 0, kBackImg);
+				p.restore();
+			}
+		};
+
+		if (frontFacing) {
+			drawBack();
+			for (const auto &side : sides) {
+				p.setPen(Qt::NoPen);
+				p.setBrush(side.color);
+				p.drawPolygon(side.poly);
+			}
+			drawFront();
+		} else {
+			drawFront();
+			for (const auto &side : sides) {
+				p.setPen(Qt::NoPen);
+				p.setBrush(side.color);
+				p.drawPolygon(side.poly);
+			}
+			drawBack();
 		}
 		return;
 	}

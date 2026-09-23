@@ -132,7 +132,8 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 					row,
 					title,
 					isChecked,
-					st::settingsCheckbox));
+					st::defaultCheckbox,
+					st::defaultToggle));
 
 			checkbox->checkedChanges(
 			) | rpl::on_next([=, pluginId = p.id](bool checked) {

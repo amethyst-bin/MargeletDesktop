@@ -33,8 +33,10 @@ QPixmap GenerateBadgeIcon(const QColor &color, int size, qreal devicePixelRatio,
 	pixmap.fill(Qt::transparent);
 	pixmap.setDevicePixelRatio(devicePixelRatio);
 
-	if (customIconId == u"kent"_q) {
-		const auto img = GetKentBadgeImage();
+	if (customIconId == u"kent"_q || customIconId == u"yoxi"_q) {
+		const auto img = (customIconId == u"kent"_q)
+			? GetKentBadgeImage()
+			: GetYoxiBadgeImage();
 		QPainter p(&pixmap);
 		p.setRenderHint(QPainter::Antialiasing);
 		p.setRenderHint(QPainter::SmoothPixmapTransform);

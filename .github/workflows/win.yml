@@ -212,6 +212,8 @@ jobs:
           set OUT_DEBUG=%TBUILD%\%REPO_NAME%\out\Debug
           set OUT_RELEASE=%TBUILD%\%REPO_NAME%\out\Release
           mkdir artifact
+          if exist %OUT_DEBUG%\MareletDesktop.exe move %OUT_DEBUG%\MareletDesktop.exe artifact\
+          if exist %OUT_RELEASE%\MareletDesktop.exe move %OUT_RELEASE%\MareletDesktop.exe artifact\
           if exist %OUT_DEBUG%\Telegram.exe move %OUT_DEBUG%\Telegram.exe artifact\
           if exist %OUT_RELEASE%\Telegram.exe move %OUT_RELEASE%\Telegram.exe artifact\
           if exist %OUT_DEBUG%\Updater.exe move %OUT_DEBUG%\Updater.exe artifact\
@@ -220,6 +222,6 @@ jobs:
         name: Upload artifact.
         if: (env.UPLOAD_ARTIFACT == 'true') || (github.ref == 'refs/heads/nightly')
         with:
-          name: MargyDesktop-Windows-x64
+          name: MareletDesktop-Windows-x64
           path: artifact\
           retention-days: 14

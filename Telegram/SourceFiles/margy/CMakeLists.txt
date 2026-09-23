@@ -56,6 +56,8 @@ target_sources(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_plugin_hooks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_typing_overlay.h
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_typing_overlay.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_snow_overlay.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins/margy_snow_overlay.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugins_box.h
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugins_box.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ui/margy_plugin_settings_box.h

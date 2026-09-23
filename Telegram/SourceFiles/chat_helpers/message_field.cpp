@@ -776,8 +776,8 @@ std::shared_ptr<Ui::ChatStyle> InitMessageField(
 			field->textCursor().position(),
 			float(fm.horizontalAdvance('a')),
 			float(fm.height()),
-			field->geometry().left(),
-			field->geometry().top());
+			field->textMargins().left(),
+			field->textMargins().top());
 		*prevText = text;
 	}, field->lifetime());
 	return style;

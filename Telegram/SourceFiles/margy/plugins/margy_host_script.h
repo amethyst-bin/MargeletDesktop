@@ -15,6 +15,7 @@ import json
 import math
 import os
 import sys
+import threading
 import time
 import traceback
 import types
@@ -30,6 +31,7 @@ _loaded = {}
 _settings_specs = {}
 _hooks_enabled = True
 _active_fields = {}
+_current_activity = None
 
 
 def send_ipc(obj):
@@ -61,73 +63,6 @@ class _Console:
 
 
 # --- Mock Java & Android environment ---
-
-class DynamicObject:
-    def __init__(self, name="DynamicObject", *args, **kwargs):
-        self._name = name
-
-    def __getattr__(self, name):
-        if name == "__name__":
-            return self._name
-        return DynamicObject(f"{self._name}.{name}")
-
-    def __setattr__(self, name, value):
-        if name.startswith("_"):
-            super().__setattr__(name, value)
-        else:
-            self.__dict__[name] = value
-
-    def __call__(self, *args, **kwargs):
-        return DynamicObject(f"{self._name}()")
-
-    def __getitem__(self, item):
-        return DynamicObject(f"{self._name}[{item}]")
-
-    def __setitem__(self, item, value):
-        pass
-
-    def __iter__(self):
-        return iter([])
-
-    def __bool__(self):
-        return True
-
-    def __int__(self):
-        return 0
-
-    def __float__(self):
-        return 0.0
-
-    def __str__(self):
-        return ""
-
-    def __repr__(self):
-        return f"<DynamicObject {self._name}>"
-
-    def __add__(self, other):
-        return self
-
-    def __radd__(self, other):
-        return other
-
-    def __sub__(self, other):
-        return self
-
-    def __mul__(self, other):
-        return self
-
-    def __truediv__(self, other):
-        return self
-
-
-class DynamicModule(types.ModuleType):
-    def __init__(self, name):
-        super().__init__(name)
-        self.__file__ = f"<{name}>"
-
-    def __getattr__(self, name):
-        return DynamicObject(f"{self.__name__}.{name}")
-
 
 class JavaSpanned:
     SPAN_EXCLUSIVE_EXCLUSIVE = 33
@@ -171,12 +106,21 @@ class JavaPaint:
     def __init__(self, char_width=10.0, line_height=20.0):
         self._char_width = char_width
         self._line_height = line_height
+        self._color = -1
+        self._anti_alias = True
 
     def measureText(self, text):
         return float(len(text) * self._char_width)
 
     def getColor(self):
-        return -1
+        return self._color
+
+    def setAntiAlias(self, val):
+        self._anti_alias = bool(val)
+
+    def setARGB(self, a, r, g, b):
+        c = ((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF)
+        self._color = c - (1 << 32) if c >= (1 << 31) else c
 
 
 class JavaLayout:
@@ -304,6 +248,137 @@ class JavaEditTextBoldCursor:
         self.needs_anim = True
 
 
+class JavaBitmapConfig:
+    ARGB_8888 = 1
+
+
+class JavaBitmap:
+    Config = JavaBitmapConfig
+
+    def __init__(self, w, h):
+        self.width = w
+        self.height = h
+        self.particles = []
+
+    @staticmethod
+    def createBitmap(w, h, config=None):
+        return JavaBitmap(w, h)
+
+
+class JavaCanvas:
+    def __init__(self, bitmap):
+        self.bitmap = bitmap
+
+    def drawCircle(self, x, y, r, paint=None):
+        if self.bitmap is not None:
+            self.bitmap.particles.append({"x": float(x), "y": float(y), "r": float(r)})
+
+
+class JavaImageView:
+    def __init__(self, context=None):
+        self._context = context
+        self._parent = None
+
+    def setClickable(self, val): pass
+    def setFocusable(self, val): pass
+    def setFocusableInTouchMode(self, val): pass
+    def setBackgroundColor(self, color): pass
+
+    def setImageBitmap(self, bitmap):
+        if bitmap is not None:
+            send_ipc({"op": "snow_frame", "particles": bitmap.particles})
+
+    def getParent(self):
+        return self._parent
+
+
+class JavaLayoutParams:
+    MATCH_PARENT = -1
+    WRAP_CONTENT = -2
+
+    def __init__(self, w, h):
+        self.width = w
+        self.height = h
+
+
+class JavaViewGroup:
+    def __init__(self, w=1200, h=800):
+        self._width = w
+        self._height = h
+        self._children = []
+
+    def getWidth(self):
+        return self._width
+
+    def getHeight(self):
+        return self._height
+
+    def addView(self, view, params=None):
+        if view not in self._children:
+            self._children.append(view)
+            view._parent = self
+
+    def removeView(self, view):
+        if view in self._children:
+            self._children.remove(view)
+            view._parent = None
+            send_ipc({"op": "snow_frame", "particles": []})
+
+
+class JavaActivity:
+    def __init__(self, chat_id=0, w=1200, h=800):
+        self.chat_id = chat_id
+        self._root = JavaViewGroup(w, h)
+
+    def getFragmentView(self):
+        return self._root
+
+    def getContentView(self):
+        return self._root
+
+    def getContext(self):
+        return self
+
+
+class JavaLooper:
+    @staticmethod
+    def getMainLooper():
+        return object()
+
+
+class JavaHandler:
+    def __init__(self, looper=None):
+        self._lock = threading.Lock()
+        self._tasks = {}
+
+    def post(self, runnable):
+        self.postDelayed(runnable, 0)
+
+    def postDelayed(self, runnable, delay_ms):
+        def fire():
+            with self._lock:
+                self._tasks.pop(id(runnable), None)
+            if hasattr(runnable, "run"):
+                runnable.run()
+            elif callable(runnable):
+                runnable()
+
+        with self._lock:
+            old_t = self._tasks.pop(id(runnable), None)
+            if old_t:
+                old_t.cancel()
+            t = threading.Timer(max(0.001, delay_ms / 1000.0), fire)
+            t.daemon = True
+            self._tasks[id(runnable)] = t
+            t.start()
+
+    def removeCallbacks(self, runnable):
+        with self._lock:
+            t = self._tasks.pop(id(runnable), None)
+            if t:
+                t.cancel()
+
+
 class MethodHookParam:
     def __init__(self, this_obj=None, args=None):
         self.thisObject = this_obj
@@ -341,6 +416,24 @@ class JavaModule:
             return JavaGradientDrawable
         if name == "org.telegram.ui.Components.EditTextBoldCursor":
             return JavaEditTextBoldCursor
+        if name == "android.view.ViewGroup":
+            return JavaViewGroup
+        if name == "android.widget.ImageView":
+            return JavaImageView
+        if name == "android.graphics.Bitmap":
+            return JavaBitmap
+        if name == "android.graphics.Canvas":
+            return JavaCanvas
+        if name == "android.graphics.Paint":
+            return JavaPaint
+        if name in ("android.view.ViewGroup$LayoutParams", "android.view.ViewGroup.LayoutParams"):
+            return JavaLayoutParams
+        if name == "android.os.Handler":
+            return JavaHandler
+        if name == "android.os.Looper":
+            return JavaLooper
+        if name == "java.lang.Runnable":
+            return object
         if name == "org.telegram.margelet.MargeletPluginHost":
             return HostProxy
         if name == "org.telegram.margelet.MargeletHooks":
@@ -351,7 +444,7 @@ class JavaModule:
             return FilesProxy
         if name == "org.telegram.messenger.AndroidUtilities":
             return AndroidUtilitiesProxy
-        return DynamicObject(name)
+        return type(name.split(".")[-1], (), {})
 
     @staticmethod
     def dynamic_proxy(cls):
@@ -360,10 +453,6 @@ class JavaModule:
     @staticmethod
     def jarray(elem_type):
         return lambda items: list(items)
-
-    @staticmethod
-    def cast(cls, obj):
-        return obj
 
 
 class HostProxy:
@@ -523,11 +612,10 @@ class Margelet:
                 call(res)
             except Exception:
                 self.error(traceback.format_exc())
-        import threading
         threading.Thread(target=worker, daemon=True).start()
 
     def activity(self):
-        return None
+        return _current_activity
 
     def window(self, title, view):
         pass
@@ -641,56 +729,6 @@ def run_plugin(plugin_id, name, folder, prefs=None):
         m._prefs.update(prefs)
     _plugins[plugin_id] = m
 
-    compat_mode = True
-    try:
-        with open(main_py, "r", encoding="utf-8", errors="ignore") as f:
-            first_line = f.readline().strip()
-            if first_line.startswith("#! Desktop"):
-                compat_mode = False
-    except Exception:
-        pass
-
-    if compat_mode:
-        compat_modules = [
-            "android",
-            "android.app",
-            "android.content",
-            "android.content.res",
-            "android.graphics",
-            "android.graphics.drawable",
-            "android.media",
-            "android.net",
-            "android.os",
-            "android.text",
-            "android.text.style",
-            "android.util",
-            "android.view",
-            "android.widget",
-            "de",
-            "de.robv",
-            "de.robv.android",
-            "de.robv.android.xposed",
-            "org",
-            "org.telegram",
-            "org.telegram.messenger",
-            "org.telegram.ui",
-            "org.telegram.ui.ActionBar",
-            "org.telegram.ui.Components",
-        ]
-        for mod_name in compat_modules:
-            if mod_name not in sys.modules:
-                sys.modules[mod_name] = DynamicModule(mod_name)
-
-        java_mod = DynamicModule("java")
-        java_mod.jclass = JavaModule.jclass
-        java_mod.dynamic_proxy = JavaModule.dynamic_proxy
-        java_mod.jarray = JavaModule.jarray
-        java_mod.cast = JavaModule.cast
-        sys.modules["java"] = java_mod
-
-        import builtins
-        builtins.margelet = m
-
     out, err = sys.stdout, sys.stderr
     sys.stdout = _Console(name, False)
     sys.stderr = _Console(name, True)
@@ -756,10 +794,21 @@ def handle_input_step(field_id):
 
 def emit_anim_frame(field):
     sparks = []
+    cursor_x = 0.0
+    cursor_y = 0.0
+    cursor_h = 0.0
+    cursor_active = not field.cursor_visible
+
     for d in list(field.overlay.drawables):
         b = d.bounds
         w = b[2] - b[0]
         h = b[3] - b[1]
+        if getattr(d, 'shape', 0) == JavaGradientDrawable.RECTANGLE or w <= 4:
+            cursor_x = b[0]
+            cursor_y = b[1]
+            cursor_h = h
+            cursor_active = True
+            continue
         cx = b[0] + w * 0.5
         cy = b[1] + h * 0.5
         r = max(1.0, max(w, h) * 0.5)
@@ -769,18 +818,24 @@ def emit_anim_frame(field):
         alpha = float(d.alpha) / 255.0
         sparks.append({"x": cx, "y": cy, "r": r, "color": color, "alpha": alpha})
 
-    cursor_info = {"visible": field.cursor_visible, "active": not field.cursor_visible}
+    cursor_info = {
+        "visible": field.cursor_visible,
+        "active": cursor_active,
+        "x": cursor_x,
+        "y": cursor_y,
+        "height": cursor_h
+    }
     send_ipc({
         "op": "anim_frame",
         "field_id": field.field_id,
-        "active": field.needs_anim or len(sparks) > 0,
+        "active": field.needs_anim or len(sparks) > 0 or cursor_active,
         "sparks": sparks,
         "cursor": cursor_info
     })
 
 
 def main():
-    global _hooks_enabled
+    global _hooks_enabled, _current_activity
     send_ipc({"op": "ready", "python_version": sys.version})
 
     while True:
@@ -805,13 +860,6 @@ def main():
         elif cmd == "run":
             run_plugin(msg["id"], msg["name"], msg["folder"], msg.get("prefs"))
 
-        elif cmd == "stop":
-            p_id = msg.get("id")
-            p = _plugins.pop(p_id, None)
-            _loaded.pop(p_id, None)
-            if p:
-                p.log("плагин остановлен")
-
         elif cmd == "setting":
             p_id = msg.get("plugin")
             k = msg.get("key")
@@ -833,13 +881,20 @@ def main():
 
         elif cmd == "send":
             text = msg.get("text", "")
+            chat_id = msg.get("chat_id", 0)
             req_id = msg.get("req_id")
             cancelled = False
             for p in list(_plugins.values()):
                 p._cancel_send = False
                 for cb in list(p._on_send):
                     try:
-                        res = cb(text)
+                        import inspect
+                        sig = inspect.signature(cb)
+                        params = list(sig.parameters.values())
+                        if len(params) >= 2:
+                            res = cb(text, chat_id)
+                        else:
+                            res = cb(text)
                         if res is False or p._cancel_send:
                             cancelled = True
                             break
@@ -852,13 +907,30 @@ def main():
             send_ipc({"op": "send_res", "req_id": req_id, "text": text, "cancelled": cancelled})
 
         elif cmd == "chat_opened":
-            chat_id = msg.get("chat_id")
+            chat_id = msg.get("chat_id", 0)
+            w = int(msg.get("width", 1200))
+            h = int(msg.get("height", 800))
+            activity = JavaActivity(chat_id, w, h)
+            _current_activity = activity
             for p in list(_plugins.values()):
                 for cb in list(p._on_chat_opened):
                     try:
-                        cb(chat_id)
+                        import inspect
+                        sig = inspect.signature(cb)
+                        params = list(sig.parameters.values())
+                        if len(params) >= 1:
+                            cb(activity)
+                        else:
+                            cb()
                     except Exception:
                         p.error(traceback.format_exc())
+
+        elif cmd == "chat_resize":
+            w = int(msg.get("width", 1200))
+            h = int(msg.get("height", 800))
+            if _current_activity is not None:
+                _current_activity._root._width = w
+                _current_activity._root._height = h
 
         elif cmd == "input_change":
             handle_input_change(
@@ -878,7 +950,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 )py";
 
 } // namespace Margy::Plugins

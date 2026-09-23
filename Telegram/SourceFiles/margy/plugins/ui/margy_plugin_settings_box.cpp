@@ -61,7 +61,8 @@ void PluginSettingsBox::prepare() {
 					content,
 					row.title,
 					isChecked,
-					st::settingsCheckbox),
+					st::defaultCheckbox,
+					st::defaultToggle),
 				st::settingsSendTypePadding);
 			cb->checkedChanges(
 			) | rpl::on_next([=, key = row.key](bool checked) {

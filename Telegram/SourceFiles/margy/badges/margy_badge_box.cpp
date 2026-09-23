@@ -4,6 +4,7 @@
 #include "boxes/abstract_box.h"
 #include "ui/layers/generic_box.h"
 #include "ui/widgets/labels.h"
+#include "ui/basic_click_handlers.h"
 #include "lang/lang_keys.h"
 #include "styles/style_layers.h"
 #include "styles/style_boxes.h"
@@ -38,7 +39,7 @@ void InitBadgeBox(not_null<::Ui::GenericBox*> box, const Badge &badge) {
 	if (!badge.url.isEmpty()) {
 		const auto actionText = isRu ? u"Перейти"_q : u"Open"_q;
 		box->addButton(rpl::single(actionText), [url = badge.url] {
-			QDesktopServices::openUrl(QUrl(url));
+			UrlClickHandler::Open(url);
 		});
 	}
 

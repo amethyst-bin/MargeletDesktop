@@ -78,17 +78,23 @@ void MargySettingsSection::setupContent() {
 		Badges::BadgeGalleryBox::Show(this);
 	});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
+	const auto addToggle = [&](const QString &text, bool checked, auto &&callback) {
+		const auto toggle = ::Settings::AddButtonWithIcon(
 			content,
-			u"Включить бейджи сообщества Margy"_q,
-			Config::Instance().badgesEnabled(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setBadgesEnabled(checked);
-	}, content->lifetime());
+			rpl::single(text),
+			st::settingsButtonNoIcon
+		)->toggleOn(rpl::single(checked));
+		toggle->toggledChanges(
+		) | rpl::on_next(std::move(callback), content->lifetime());
+		return toggle;
+	};
+
+	addToggle(
+		u"Включить бейджи сообщества Margy"_q,
+		Config::Instance().badgesEnabled(),
+		[=](bool checked) {
+			Config::Instance().setBadgesEnabled(checked);
+		});
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
@@ -133,65 +139,40 @@ void MargySettingsSection::setupContent() {
 		Wall::WallBox::Show(this);
 	});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Красить свои сообщения градиентом профиля"_q,
-			Config::Instance().ownBubblesGradient(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setOwnBubblesGradient(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Красить свои сообщения градиентом профиля"_q,
+		Config::Instance().ownBubblesGradient(),
+		[=](bool checked) {
+			Config::Instance().setOwnBubblesGradient(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Премиум-значки для всех (видны в Margy)"_q,
-			Config::Instance().freeEmoji(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setFreeEmoji(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Премиум-значки для всех (видны в Margy)"_q,
+		Config::Instance().freeEmoji(),
+		[=](bool checked) {
+			Config::Instance().setFreeEmoji(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Показывать скрытые подарки (Star Gifts)"_q,
-			Config::Instance().unhideGifts(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setUnhideGifts(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Показывать скрытые подарки (Star Gifts)"_q,
+		Config::Instance().unhideGifts(),
+		[=](bool checked) {
+			Config::Instance().setUnhideGifts(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Закреплять каналы первыми"_q,
-			Config::Instance().pinChannelFirst(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setPinChannelFirst(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Закреплять каналы первыми"_q,
+		Config::Instance().pinChannelFirst(),
+		[=](bool checked) {
+			Config::Instance().setPinChannelFirst(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Скрывать папку «Все чаты»"_q,
-			Config::Instance().hideAllChatsTab(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setHideAllChatsTab(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Скрывать папку «Все чаты»"_q,
+		Config::Instance().hideAllChatsTab(),
+		[=](bool checked) {
+			Config::Instance().setHideAllChatsTab(checked);
+		});
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
@@ -200,77 +181,47 @@ void MargySettingsSection::setupContent() {
 	// 3. Streamer Mode & Privacy
 	Ui::AddSubsectionTitle(content, rpl::single(u"Режим стримера и приватность"_q));
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Режим стримера (полная маскировка +• ••• •••-••-••)"_q,
-			Config::Instance().streamerMode(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setStreamerMode(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Режим стримера (полная маскировка +• ••• •••-••-••)"_q,
+		Config::Instance().streamerMode(),
+		[=](bool checked) {
+			Config::Instance().setStreamerMode(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Скрывать чужие юзернеймы"_q,
-			Config::Instance().streamerHidesOthers(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setStreamerHidesOthers(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Скрывать чужие юзернеймы"_q,
+		Config::Instance().streamerHidesOthers(),
+		[=](bool checked) {
+			Config::Instance().setStreamerHidesOthers(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Скрывать свой юзернейм"_q,
-			Config::Instance().streamerHidesUsername(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setStreamerHidesUsername(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Скрывать свой юзернейм"_q,
+		Config::Instance().streamerHidesUsername(),
+		[=](bool checked) {
+			Config::Instance().setStreamerHidesUsername(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Показывать ID в профилях"_q,
-			Config::Instance().showIds(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setShowIds(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Показывать ID в профилях"_q,
+		Config::Instance().showIds(),
+		[=](bool checked) {
+			Config::Instance().setShowIds(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Копирование с разметкой"_q,
-			Config::Instance().copyFormatting(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setCopyFormatting(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Копирование с разметкой"_q,
+		Config::Instance().copyFormatting(),
+		[=](bool checked) {
+			Config::Instance().setCopyFormatting(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Редактор тегов аудио"_q,
-			Config::Instance().tagsEnabled(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setTagsEnabled(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Редактор тегов аудио"_q,
+		Config::Instance().tagsEnabled(),
+		[=](bool checked) {
+			Config::Instance().setTagsEnabled(checked);
+		});
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
@@ -297,29 +248,19 @@ void MargySettingsSection::setupContent() {
 		Plugins::UI::PluginConsoleBox::Show(this);
 	});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Включить систему плагинов Python (.marp)"_q,
-			Config::Instance().pluginsEnabled(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setPluginsEnabled(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Включить систему плагинов Python (.marp)"_q,
+		Config::Instance().pluginsEnabled(),
+		[=](bool checked) {
+			Config::Instance().setPluginsEnabled(checked);
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Разрешить хуки методов (Method hooks)"_q,
-			Config::Instance().pluginHooksEnabled(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setPluginHooksEnabled(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Разрешить хуки методов (Method hooks)"_q,
+		Config::Instance().pluginHooksEnabled(),
+		[=](bool checked) {
+			Config::Instance().setPluginHooksEnabled(checked);
+		});
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);
@@ -328,33 +269,23 @@ void MargySettingsSection::setupContent() {
 	// 5. Network, Sounds & Easter Eggs
 	Ui::AddSubsectionTitle(content, rpl::single(u"Сеть, звуки и пасхалки"_q));
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Встроенный MTProxy сообщества Margy"_q,
-			Proxy::IsCommunityProxyActive(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		if (checked) {
-			Proxy::ConnectCommunityProxy();
-		} else {
-			Proxy::DisconnectCommunityProxy();
-		}
-	}, content->lifetime());
+	addToggle(
+		u"Встроенный MTProxy сообщества Margy"_q,
+		Proxy::IsCommunityProxyActive(),
+		[=](bool checked) {
+			if (checked) {
+				Proxy::ConnectCommunityProxy();
+			} else {
+				Proxy::DisconnectCommunityProxy();
+			}
+		});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Звук мяуканья при клике на логотип"_q,
-			Config::Instance().meowEnabled(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setMeowEnabled(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Звук мяуканья при клике на логотип"_q,
+		Config::Instance().meowEnabled(),
+		[=](bool checked) {
+			Config::Instance().setMeowEnabled(checked);
+		});
 
 	const auto testSoundBtn = ::Settings::AddButtonWithIcon(
 		content,
@@ -365,17 +296,12 @@ void MargySettingsSection::setupContent() {
 		Sound::PlayMeow();
 	});
 
-	content->add(
-		object_ptr<Ui::Checkbox>(
-			content,
-			u"Пасхалка: режим «Приступ» (радужные цвета)"_q,
-			Config::Instance().seizureMode(),
-			st::settingsCheckbox),
-		st::settingsSendTypePadding
-	)->checkedChanges(
-	) | rpl::on_next([=](bool checked) {
-		Config::Instance().setSeizureMode(checked);
-	}, content->lifetime());
+	addToggle(
+		u"Пасхалка: режим «Приступ» (радужные цвета)"_q,
+		Config::Instance().seizureMode(),
+		[=](bool checked) {
+			Config::Instance().setSeizureMode(checked);
+		});
 
 	Ui::AddSkip(content);
 	Ui::AddDivider(content);

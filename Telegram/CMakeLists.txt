@@ -61,7 +61,10 @@ if (DESKTOP_APP_TEST_APPS OR DESKTOP_APP_SPECIAL_TARGET)
     include(cmake/test_update_verify.cmake)
 endif()
 
-set_target_properties(Telegram PROPERTIES AUTOMOC ON)
+set_target_properties(Telegram PROPERTIES
+    AUTOMOC ON
+    OUTPUT_NAME "MareletDesktop"
+)
 
 target_link_libraries(Telegram
 PRIVATE

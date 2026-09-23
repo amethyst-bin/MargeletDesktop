@@ -390,7 +390,8 @@ Ui::Checkbox *SectionBuilder::addCheckbox(CheckboxArgs &&args) {
 			container,
 			ResolveTitle(rpl::duplicate(args.title)),
 			args.checked,
-			st::settingsCheckbox);
+			st::defaultCheckbox,
+			st::defaultToggle);
 	};
 	return static_cast<Ui::Checkbox*>(addControl({
 		.factory = factory,

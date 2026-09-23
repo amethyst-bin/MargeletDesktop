@@ -5,7 +5,7 @@
 
 namespace Margy::Plugins::Hooks {
 
-[[nodiscard]] QString OnSend(const QString &text, bool *outCancelled = nullptr);
+[[nodiscard]] QString OnSend(const QString &text, int64_t chatId = 0, bool *outCancelled = nullptr);
 void OnMessage(const QString &text, int64_t dialogId, int32_t messageId, bool out);
 void OnChatOpened(int64_t dialogId);
 

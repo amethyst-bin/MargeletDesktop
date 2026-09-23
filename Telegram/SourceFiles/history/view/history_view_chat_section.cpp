@@ -64,6 +64,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_editing.h"
 #include "api/api_sending.h"
 #include "apiwrap.h"
+#include "margy/plugins/margy_plugin_hooks.h"
+#include "margy/plugins/margy_snow_overlay.h"
 #include "boxes/premium_preview_box.h"
 #include "data/business/data_shortcut_messages.h"
 #include "settings/business/settings_quick_replies.h"
@@ -517,6 +519,8 @@ ChatWidget::ChatWidget(
 	setupShortcuts();
 
 	_peer->updateFull();
+	Margy::Plugins::SnowOverlay::Attach(this);
+	Margy::Plugins::Hooks::OnChatOpened(_peer->id.value);
 	if (const auto channel = _peer->asMegagroup()) {
 		if (!channel->mgInfo->adminsLoaded) {
 			session().api().chatParticipants().requestAdmins(channel);
@@ -2551,6 +2555,17 @@ void ChatWidget::sendTextWithTags(
 		Fn<void()> done) {
 	if (!options.scheduled) {
 		_cornerButtons.clearReplyReturns();
+	}
+
+	auto cancelled = false;
+	const auto peerId = _peer ? _peer->id.value : 0;
+	textWithTags.text = Margy::Plugins::Hooks::OnSend(
+		textWithTags.text,
+		peerId,
+		&cancelled);
+	if (cancelled) {
+		_composeControls->clearFieldText();
+		return;
 	}
 
 	auto message = Api::MessageToSend(prepareSendAction(options));

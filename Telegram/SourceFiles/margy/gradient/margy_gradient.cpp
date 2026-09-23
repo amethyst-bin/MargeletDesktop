@@ -97,7 +97,8 @@ void GradientBox::prepare() {
 			content,
 			u"Включить кастомный градиент профиля"_q,
 			_enabled,
-			st::settingsCheckbox),
+			st::defaultCheckbox,
+			st::defaultToggle),
 		st::boxRowPadding);
 	enableCheck->checkedChanges(
 	) | rpl::on_next([=](bool checked) {

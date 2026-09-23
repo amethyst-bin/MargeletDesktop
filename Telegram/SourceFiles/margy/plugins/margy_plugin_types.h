@@ -63,6 +63,12 @@ struct SparkParticle final {
 	float alpha = 1.0f;
 };
 
+struct SnowParticle final {
+	float x = 0.0f;
+	float y = 0.0f;
+	float r = 3.0f;
+};
+
 struct CursorGlideState final {
 	float x = 0.0f;
 	float y = 0.0f;
