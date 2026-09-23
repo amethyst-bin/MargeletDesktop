@@ -11,6 +11,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "margy/markup/margy_markup.h"
 #include <QtWidgets/QMenu>
 #include <QtGui/QAction>
+#include <QtGui/QTextDocument>
+#include <QtWidgets/QTextEdit>
 
 #include "history/history_widget.h"
 #include "history/history.h" // History::session
@@ -769,6 +771,9 @@ std::shared_ptr<Ui::ChatStyle> InitMessageField(
 	) | rpl::on_next([=] {
 		const auto text = field->getTextWithTags().text;
 		const auto fm = field->fontMetrics();
+		const auto raw = field->rawTextEdit();
+		const auto padLeft = raw->geometry().left() + int(raw->document()->documentMargin());
+		const auto padTop = raw->geometry().top() + int(raw->document()->documentMargin());
 		Margy::Plugins::Hooks::OnInputTextChanged(
 			u"message_field"_q,
 			text,
@@ -776,8 +781,8 @@ std::shared_ptr<Ui::ChatStyle> InitMessageField(
 			field->textCursor().position(),
 			float(fm.horizontalAdvance('a')),
 			float(fm.height()),
-			field->textMargins().left(),
-			field->textMargins().top());
+			padLeft,
+			padTop);
 		*prevText = text;
 	}, field->lifetime());
 	return style;
