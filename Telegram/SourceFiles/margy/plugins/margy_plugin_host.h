@@ -24,6 +24,7 @@ public:
 	[[nodiscard]] bool isPluginRunning(const QString &id) const;
 
 	void launchPlugin(const PluginManifest &plugin);
+	void stopPlugin(const QString &id);
 	void chatOpened(int64_t chatId);
 	[[nodiscard]] QString onSend(const QString &text, bool *outCancelled = nullptr);
 	void onMessage(const QString &text, int64_t dialogId, int32_t messageId, bool out);

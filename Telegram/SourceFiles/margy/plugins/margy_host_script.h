@@ -805,6 +805,13 @@ def main():
         elif cmd == "run":
             run_plugin(msg["id"], msg["name"], msg["folder"], msg.get("prefs"))
 
+        elif cmd == "stop":
+            p_id = msg.get("id")
+            p = _plugins.pop(p_id, None)
+            _loaded.pop(p_id, None)
+            if p:
+                p.log("плагин остановлен")
+
         elif cmd == "setting":
             p_id = msg.get("plugin")
             k = msg.get("key")

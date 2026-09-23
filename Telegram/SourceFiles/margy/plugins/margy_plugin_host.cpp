@@ -255,6 +255,17 @@ void Host::launchPlugin(const PluginManifest &plugin) {
 	_runningPlugins.insert(plugin.id);
 }
 
+void Host::stopPlugin(const QString &id) {
+	Manager::Instance().log(u"margelet"_q, u"Остановка плагина: "_q + id);
+	_runningPlugins.erase(id);
+	if (_running) {
+		auto obj = QJsonObject();
+		obj[u"cmd"_q] = u"stop"_q;
+		obj[u"id"_q] = id;
+		sendCommand(QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
+	}
+}
+
 void Host::chatOpened(int64_t chatId) {
 	if (!_running) {
 		start();
