@@ -285,8 +285,8 @@ void Host::processLine(const QString &line) {
 				}
 			}
 			const auto history = (chatId != 0)
-				? controller->session().data().history(peerId)
-				: (controller->activeChat() ? controller->session().data().history(controller->activeChat()->id) : nullptr);
+				? controller->session().data().history(peerId).get()
+				: controller->activeChatCurrent().history();
 			if (history) {
 				auto message = Api::MessageToSend(Api::SendAction(history));
 				message.textWithTags = { text, {} };

@@ -8,6 +8,7 @@
 #include <QtCore/QByteArray>
 #include <QtGui/QPainter>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QWindow>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 #include <QtSvg/QSvgRenderer>
