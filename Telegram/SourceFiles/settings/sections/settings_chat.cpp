@@ -1417,7 +1417,8 @@ void SetupStickersEmoji(
 			container,
 			label,
 			checked,
-			st::settingsCheckbox);
+			st::settingsCheckbox,
+			st::defaultToggle);
 	};
 	const auto addWithReturn = [&](
 			const QString &label,
@@ -1770,7 +1771,8 @@ void SetupMessages(
 			inner,
 			tr::lng_settings_chat_corner_reply(tr::now),
 			Core::App().settings().cornerReply(),
-			st::settingsCheckbox),
+			st::settingsCheckbox,
+			st::defaultToggle),
 		st::settingsCheckboxPadding);
 	cornerReply->checkedChanges(
 	) | rpl::on_next([=](bool checked) {
@@ -1789,7 +1791,8 @@ void SetupMessages(
 			inner,
 			tr::lng_settings_chat_corner_reaction(tr::now),
 			Core::App().settings().cornerReaction(),
-			st::settingsCheckbox),
+			st::settingsCheckbox,
+			st::defaultToggle),
 		st::settingsCheckboxPadding);
 	cornerReaction->checkedChanges(
 	) | rpl::on_next([=](bool checked) {
@@ -1808,7 +1811,8 @@ void SetupMessages(
 			inner,
 			tr::lng_settings_pull_to_next_channel(tr::now),
 			Core::App().settings().pullToNextChannel(),
-			st::settingsCheckbox),
+			st::settingsCheckbox,
+			st::defaultToggle),
 		st::settingsCheckboxPadding);
 	pullToNext->checkedChanges(
 	) | rpl::on_next([=](bool checked) {
@@ -2060,7 +2064,8 @@ void SetupChatBackground(
 				inner,
 				tr::lng_settings_bg_tile(tr::now),
 				background->tile(),
-				st::settingsCheckbox),
+				st::settingsCheckbox,
+				st::defaultToggle),
 			st::settingsSendTypePadding));
 	const auto adaptive = inner->add(
 		object_ptr<Ui::SlideWrap<Ui::Checkbox>>(
@@ -2069,7 +2074,8 @@ void SetupChatBackground(
 				inner,
 				tr::lng_settings_adaptive_wide(tr::now),
 				Core::App().settings().adaptiveForWide(),
-				st::settingsCheckbox),
+				st::settingsCheckbox,
+				st::defaultToggle),
 			st::settingsSendTypePadding));
 
 	tile->entity()->checkedChanges(
@@ -2369,7 +2375,8 @@ void SetupDefaultThemes(
 				container,
 				tr::lng_settings_theme_system_accent_color(tr::now),
 				Core::App().settings().systemAccentColorEnabled(),
-				st::settingsCheckbox)),
+				st::settingsCheckbox,
+				st::defaultToggle)),
 		st::settingsCheckboxPadding);
 	systemAccentWrap->setDuration(0);
 
@@ -2861,7 +2868,8 @@ void SetupSupport(
 			inner,
 			"Enable templates autocomplete",
 			controller->session().settings().supportTemplatesAutocomplete(),
-			st::settingsCheckbox),
+			st::settingsCheckbox,
+			st::defaultToggle),
 		st::settingsSendTypePadding
 	)->checkedChanges(
 	) | rpl::on_next([=](bool checked) {
@@ -2875,7 +2883,8 @@ void SetupSupport(
 			inner,
 			"Send all messages without sound",
 			controller->session().settings().supportAllSilent(),
-			st::settingsCheckbox),
+			st::settingsCheckbox,
+			st::defaultToggle),
 		st::settingsSendTypePadding
 	)->checkedChanges(
 	) | rpl::on_next([=](bool checked) {

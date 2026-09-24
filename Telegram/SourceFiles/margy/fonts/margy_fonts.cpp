@@ -70,7 +70,7 @@ void FontsBox::prepare() {
 	const auto emojiBtn = content->add(
 		object_ptr<::Ui::SettingsButton>(
 			content,
-			rpl::single(u"Открыть менеджер наборов эмодзи 🎨"_q),
+			rpl::single(u"Открыть менеджер наборов эмодзи"_q),
 			st::settingsButton),
 		st::boxRowPadding);
 	emojiBtn->setClickedCallback([=] {
@@ -85,7 +85,7 @@ void FontsBox::prepare() {
 	content->add(
 		object_ptr<::Ui::FlatLabel>(
 			content,
-			u"Margy Desktop 🐱✨🚀\nСъешь ещё этих мягких французских булок 🐾\n0123456789"_q,
+			u"Margy Desktop\nСъешь ещё этих мягких французских булок\n0123456789"_q,
 			st::boxLabel),
 		st::boxRowPadding,
 		style::al_center);

@@ -24,6 +24,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "main/main_app_config.h"
 #include "apiwrap.h"
+#include "margy/margy_config.h"
 
 namespace Data {
 namespace {
@@ -898,14 +899,38 @@ bool ChatFilters::archiveNeeded() const {
 }
 
 const std::vector<ChatFilter> &ChatFilters::list() const {
+	if (Margy::Config::Instance().hideAllChatsTab() && _list.size() > 1) {
+		_filteredList.clear();
+		_filteredList.reserve(_list.size());
+		for (const auto &filter : _list) {
+			if (filter.id() != 0) {
+				_filteredList.push_back(filter);
+			}
+		}
+		return _filteredList;
+	}
 	return _list;
 }
 
 FilterId ChatFilters::defaultId() const {
+	if (Margy::Config::Instance().hideAllChatsTab() && _list.size() > 1) {
+		for (const auto &filter : _list) {
+			if (filter.id() != 0) {
+				return filter.id();
+			}
+		}
+	}
 	return lookupId(0);
 }
 
 FilterId ChatFilters::lookupId(int index) const {
+	if (Margy::Config::Instance().hideAllChatsTab() && _list.size() > 1) {
+		const auto &filtered = list();
+		if (index >= 0 && index < int(filtered.size())) {
+			return filtered[index].id();
+		}
+		return 0;
+	}
 	Expects(index >= 0 && index < _list.size());
 
 	if (_owner->session().user()->isPremium() || !_list.front().id()) {

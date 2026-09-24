@@ -4,9 +4,19 @@
 
 namespace Margy {
 
+enum class IconPack {
+	Default = 0,
+	Lucide = 1,
+	Tabler = 2,
+	Phosphor = 3,
+};
+
 class Config final {
 public:
 	[[nodiscard]] static Config &Instance();
+
+	[[nodiscard]] IconPack iconPack() const { return _iconPack; }
+	void setIconPack(IconPack pack);
 
 	[[nodiscard]] bool badgesEnabled() const { return _badgesEnabled; }
 	void setBadgesEnabled(bool enabled);
@@ -118,6 +128,7 @@ private:
 	bool _freeEmoji = true;
 	bool _pluginsEnabled = true;
 	bool _pluginHooksEnabled = true;
+	IconPack _iconPack = IconPack::Default;
 };
 
 [[nodiscard]] inline bool BadgesEnabled() {

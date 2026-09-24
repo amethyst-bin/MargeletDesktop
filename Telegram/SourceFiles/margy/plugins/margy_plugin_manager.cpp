@@ -290,12 +290,17 @@ bool Manager::installPlugin(const QString &marpPath, QString *outError) {
 }
 
 bool Manager::uninstallPlugin(const QString &id) {
+	Host::Instance().stopPlugin(id);
+	Config::Instance().setPluginEnabled(id, false);
 	const auto target = filesPath(id);
 	if (QFileInfo::exists(target)) {
 		QDir(target).removeRecursively();
 		reloadInstalled();
+		_pluginsUpdated.fire({});
 		return true;
 	}
+	reloadInstalled();
+	_pluginsUpdated.fire({});
 	return false;
 }
 

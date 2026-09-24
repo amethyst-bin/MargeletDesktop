@@ -12,10 +12,13 @@
 #include "margy/seizure/margy_seizure.h"
 #include "margy/gifts/margy_gifts.h"
 #include "margy/plugins/ui/margy_plugins_box.h"
+#include "margy/plugins/ui/margy_plugins_section.h"
 #include "margy/plugins/ui/margy_plugin_console_box.h"
+#include "margy/icons/margy_icon_packs.h"
 #include "settings/settings_common.h"
 #include "chat_helpers/emoji_sets_manager.h"
 #include "boxes/abstract_box.h"
+#include "ui/boxes/generic_box.h"
 
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
@@ -112,9 +115,60 @@ void MargySettingsSection::setupContent() {
 		controller()->show(Box<Ui::Emoji::ManageSetsBox>(&controller()->session()));
 	});
 
+	const auto packName = [](IconPack pack) {
+		switch (pack) {
+		case IconPack::Lucide: return u"Lucide Icons"_q;
+		case IconPack::Tabler: return u"Tabler Icons"_q;
+		case IconPack::Phosphor: return u"Phosphor Icons"_q;
+		default: return u"Default"_q;
+		}
+	};
+
+	const auto iconPackBtn = ::Settings::AddButtonWithIcon(
+		content,
+		rpl::single(u"Икон-пак: "_q + packName(IconPacks::Instance().currentPack())),
+		st::settingsButton,
+		{ &st::menuIconPalette, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x8B, 0x5C, 0xF6)) });
+	iconPackBtn->setClickedCallback([=] {
+		controller()->show(Box([=](not_null<Ui::GenericBox*> box) {
+			box->setTitle(rpl::single(u"Выбор икон-пака"_q));
+			const auto group = std::make_shared<Ui::RadiobuttonGroup>(
+				int(IconPacks::Instance().currentPack()));
+			const auto addOption = [&](IconPack pack, const QString &title) {
+				box->addRow(
+					object_ptr<Ui::Radiobutton>(
+						box,
+						group,
+						int(pack),
+						title,
+						st::defaultBoxCheckbox),
+					st::boxOptionListPadding
+						+ QMargins(
+							st::boxPadding.left(),
+							0,
+							st::boxPadding.right(),
+							st::boxOptionListSkip));
+			};
+			addOption(IconPack::Default, u"Default (стандартный набор иконок)"_q);
+			addOption(IconPack::Lucide, u"Lucide Icons (минималистичный векторный стиль)"_q);
+			addOption(IconPack::Tabler, u"Tabler Icons (четкий функциональный стиль)"_q);
+			addOption(IconPack::Phosphor, u"Phosphor Icons (современный гибкий стиль)"_q);
+
+			box->addButton(tr::lng_box_ok(), [=] {
+				const auto chosen = static_cast<IconPack>(group->current());
+				IconPacks::Instance().setPack(chosen);
+				iconPackBtn->setText(u"Икон-пак: "_q + packName(chosen));
+				box->closeBox();
+			});
+			box->addButton(tr::lng_cancel(), [=] {
+				box->closeBox();
+			});
+		}));
+	});
+
 	const auto catsBtn = ::Settings::AddButtonWithIcon(
 		content,
-		rpl::single(u"Коты Margy 🐾"_q),
+		rpl::single(u"Коты Margy"_q),
 		st::settingsButton,
 		{ &st::menuIconStickers, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xEC, 0x48, 0x99)) });
 	catsBtn->setClickedCallback([=] {
@@ -132,7 +186,7 @@ void MargySettingsSection::setupContent() {
 
 	const auto wallBtn = ::Settings::AddButtonWithIcon(
 		content,
-		rpl::single(u"Стена профиля 📝"_q),
+		rpl::single(u"Стена профиля"_q),
 		st::settingsButton,
 		{ &st::menuIconEdit, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x10, 0xB9, 0x81)) });
 	wallBtn->setClickedCallback([=] {
@@ -172,6 +226,7 @@ void MargySettingsSection::setupContent() {
 		Config::Instance().hideAllChatsTab(),
 		[=](bool checked) {
 			Config::Instance().setHideAllChatsTab(checked);
+			controller()->session().data().chatsFilters().refresh();
 		});
 
 	Ui::AddSkip(content);
@@ -236,7 +291,7 @@ void MargySettingsSection::setupContent() {
 		st::settingsButton,
 		{ &st::menuIconManage, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x06, 0xB6, 0xD4)) });
 	pluginsBtn->setClickedCallback([=] {
-		Plugins::UI::PluginsBox::Show(this);
+		showOther(Plugins::UI::MargyPluginsSectionId());
 	});
 
 	const auto pluginConsoleBtn = ::Settings::AddButtonWithIcon(
@@ -289,7 +344,7 @@ void MargySettingsSection::setupContent() {
 
 	const auto testSoundBtn = ::Settings::AddButtonWithIcon(
 		content,
-		rpl::single(u"Проверить звук 🐾"_q),
+		rpl::single(u"Проверить звук"_q),
 		st::settingsButton,
 		{ &st::menuIconSoundOn, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xEA, 0xB3, 0x08)) });
 	testSoundBtn->setClickedCallback([=] {
@@ -312,7 +367,7 @@ void MargySettingsSection::setupContent() {
 
 	const auto donateBtn = ::Settings::AddButtonWithIcon(
 		content,
-		rpl::single(u"Поддержать развитие Margy (Донат) 💖"_q),
+		rpl::single(u"Поддержать развитие Margy (Донат)"_q),
 		st::settingsButton,
 		{ &st::menuIconPremium, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0xEF, 0x44, 0x44)) });
 	donateBtn->setClickedCallback([=] {

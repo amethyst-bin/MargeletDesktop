@@ -1,8 +1,8 @@
-#pragma once
-
-namespace Margy::Plugins {
-
-inline constexpr auto kMargyHostScript = R"py(
+#pragma once
+
+namespace Margy::Plugins {
+
+inline constexpr auto kMargyHostScript = R"py(
 # -*- coding: utf-8 -*-
 """MargyDesktop plugin host runtime.
 
@@ -255,14 +255,55 @@ class JavaBitmapConfig:
 class JavaBitmap:
     Config = JavaBitmapConfig
 
-    def __init__(self, w, h):
-        self.width = w
-        self.height = h
+    def __init__(self, w, h, img=None):
+        self.width = int(w)
+        self.height = int(h)
         self.particles = []
+        self._img = img
+
+    def getWidth(self):
+        return self.width
+
+    def getHeight(self):
+        return self.height
+
+    def getPixel(self, x, y):
+        if self._img is not None:
+            try:
+                p = self._img.getpixel((int(x), int(y)))
+                if isinstance(p, tuple):
+                    r, g, b = p[0], p[1], p[2]
+                    a = p[3] if len(p) > 3 else 255
+                    return (a << 24) | (r << 16) | (g << 8) | b
+                return int(p)
+            except Exception:
+                return 0
+        return 0
 
     @staticmethod
     def createBitmap(w, h, config=None):
         return JavaBitmap(w, h)
+
+    @staticmethod
+    def createScaledBitmap(src, w, h, filter_flag=True):
+        img = None
+        if getattr(src, "_img", None) is not None:
+            try:
+                img = src._img.resize((int(w), int(h)))
+            except Exception:
+                pass
+        return JavaBitmap(w, h, img)
+
+
+class JavaBitmapFactory:
+    @staticmethod
+    def decodeFile(path, options=None):
+        try:
+            from PIL import Image
+            img = Image.open(str(path)).convert("RGBA")
+            return JavaBitmap(img.width, img.height, img)
+        except Exception:
+            return JavaBitmap(100, 100)
 
 
 class JavaCanvas:
@@ -405,6 +446,176 @@ class RegisteredHook:
 _active_method_hooks = []
 
 
+class JavaGravity:
+    CENTER = 17
+    CENTER_HORIZONTAL = 1
+    CENTER_VERTICAL = 16
+    LEFT = 3
+    RIGHT = 5
+    TOP = 48
+    BOTTOM = 80
+    START = 8388611
+    END = 8388613
+
+
+class JavaView:
+    VISIBLE = 0
+    INVISIBLE = 4
+    GONE = 8
+    OnClickListener = object
+
+    def __init__(self, context=None):
+        self.context = context
+        self._visibility = 0
+        self._layout_params = None
+
+    def setVisibility(self, v): self._visibility = v
+    def getVisibility(self): return self._visibility
+    def setLayoutParams(self, p): self._layout_params = p
+    def getLayoutParams(self): return self._layout_params
+    def setPadding(self, l, t, r, b): pass
+    def setOnClickListener(self, listener): pass
+    def setBackground(self, drawable): pass
+    def setBackgroundColor(self, color): pass
+
+
+class JavaTextView(JavaView):
+    def __init__(self, context=None):
+        super().__init__(context)
+        self._text = ""
+        self._text_size = 14
+        self._color = -1
+
+    def setText(self, text): self._text = str(text)
+    def getText(self): return self._text
+    def setTextSize(self, *args): pass
+    def setTextColor(self, color): self._color = color
+    def setGravity(self, g): pass
+    def setTypeface(self, tf, style=0): pass
+
+
+class JavaEditText(JavaTextView):
+    def __init__(self, context=None):
+        super().__init__(context)
+        self._hint = ""
+
+    def setHint(self, hint): self._hint = str(hint)
+    def getHint(self): return self._hint
+    def setInputType(self, it): pass
+    def addTextChangedListener(self, watcher): pass
+
+
+class JavaButton(JavaTextView):
+    pass
+
+
+class JavaCheckBox(JavaTextView):
+    def __init__(self, context=None):
+        super().__init__(context)
+        self._checked = False
+
+    def setChecked(self, c): self._checked = bool(c)
+    def isChecked(self): return self._checked
+    def setOnCheckedChangeListener(self, l): pass
+
+
+class JavaFrameLayout(JavaViewGroup):
+    pass
+
+
+class JavaLinearLayout(JavaViewGroup):
+    VERTICAL = 1
+    HORIZONTAL = 0
+
+    def __init__(self, context=None):
+        super().__init__()
+        self._orientation = 1
+
+    def setOrientation(self, o): self._orientation = o
+    def getOrientation(self): return self._orientation
+
+
+class JavaScrollView(JavaViewGroup):
+    pass
+
+
+class JavaHorizontalScrollView(JavaViewGroup):
+    pass
+
+
+class JavaTypedValue:
+    COMPLEX_UNIT_PX = 0
+    COMPLEX_UNIT_DIP = 1
+    COMPLEX_UNIT_SP = 2
+
+    @staticmethod
+    def applyDimension(unit, val, metrics=None):
+        return float(val)
+
+
+class JavaInputType:
+    TYPE_CLASS_TEXT = 1
+    TYPE_TEXT_FLAG_MULTI_LINE = 131072
+    TYPE_CLASS_NUMBER = 2
+
+
+class JavaTypeface:
+    NORMAL = 0
+    BOLD = 1
+    ITALIC = 2
+    BOLD_ITALIC = 3
+    MONOSPACE = "monospace"
+    DEFAULT = "default"
+    DEFAULT_BOLD = "default-bold"
+    SANS_SERIF = "sans-serif"
+    SERIF = "serif"
+
+    @staticmethod
+    def defaultFromStyle(style): return style
+    @staticmethod
+    def create(name, style): return name
+
+
+class JavaTrafficStats:
+    @staticmethod
+    def getTotalRxBytes(): return 1024 * 1024 * 10
+    @staticmethod
+    def getTotalTxBytes(): return 1024 * 1024 * 5
+    @staticmethod
+    def getMobileRxBytes(): return 1024 * 1024 * 3
+    @staticmethod
+    def getMobileTxBytes(): return 1024 * 1024 * 2
+    @staticmethod
+    def getUidRxBytes(uid): return 1024 * 1024 * 2
+    @staticmethod
+    def getUidTxBytes(uid): return 1024 * 1024 * 1
+
+
+class JavaProcess:
+    @staticmethod
+    def myUid(): return 1000
+
+
+class JavaMediaPlayer:
+    def __init__(self):
+        self._playing = False
+
+    def setDataSource(self, *args, **kwargs): pass
+    def prepare(self): pass
+    def prepareAsync(self): pass
+    def start(self): self._playing = True
+    def stop(self): self._playing = False
+    def pause(self): self._playing = False
+    def reset(self): pass
+    def release(self): pass
+    def setLooping(self, loop): pass
+    def isPlaying(self): return self._playing
+    def setVolume(self, l, r): pass
+
+    @staticmethod
+    def create(*args, **kwargs): return JavaMediaPlayer()
+
+
 class JavaModule:
     @staticmethod
     def jclass(name):
@@ -420,8 +631,10 @@ class JavaModule:
             return JavaViewGroup
         if name == "android.widget.ImageView":
             return JavaImageView
-        if name == "android.graphics.Bitmap":
+        if name in ("android.graphics.Bitmap", "Bitmap"):
             return JavaBitmap
+        if name in ("android.graphics.BitmapFactory", "BitmapFactory"):
+            return JavaBitmapFactory
         if name == "android.graphics.Canvas":
             return JavaCanvas
         if name == "android.graphics.Paint":
@@ -434,6 +647,30 @@ class JavaModule:
             return JavaLooper
         if name == "java.lang.Runnable":
             return object
+        if name in ("android.media.MediaPlayer", "android.media.MediaPlayer$OnCompletionListener"):
+            return JavaMediaPlayer
+        if name == "android.view.View":
+            return JavaView
+        if name == "android.view.Gravity":
+            return JavaGravity
+        if name == "android.widget.TextView":
+            return JavaTextView
+        if name == "android.widget.FrameLayout":
+            return JavaFrameLayout
+        if name == "android.widget.LinearLayout":
+            return JavaLinearLayout
+        if name == "android.widget.EditText":
+            return JavaEditText
+        if name == "android.widget.CheckBox":
+            return JavaCheckBox
+        if name == "android.widget.Button":
+            return JavaButton
+        if name == "android.util.TypedValue":
+            return JavaTypedValue
+        if name == "android.net.TrafficStats":
+            return JavaTrafficStats
+        if name == "android.os.Process":
+            return JavaProcess
         if name == "org.telegram.margelet.MargeletPluginHost":
             return HostProxy
         if name == "org.telegram.margelet.MargeletHooks":
@@ -519,9 +756,73 @@ class AndroidUtilitiesProxy:
             runnable()
 
 
-# Install fake java modules into sys.modules
+# Install fake java & android modules into sys.modules
+android_mod = types.ModuleType("android")
+android_widget = types.ModuleType("android.widget")
+android_view = types.ModuleType("android.view")
+android_util = types.ModuleType("android.util")
+android_text = types.ModuleType("android.text")
+android_text_style = types.ModuleType("android.text.style")
+android_graphics = types.ModuleType("android.graphics")
+android_graphics_drawable = types.ModuleType("android.graphics.drawable")
+android_net = types.ModuleType("android.net")
+android_os = types.ModuleType("android.os")
+android_media = types.ModuleType("android.media")
+
+android_widget.TextView = JavaTextView
+android_widget.FrameLayout = JavaFrameLayout
+android_widget.LinearLayout = JavaLinearLayout
+android_widget.EditText = JavaEditText
+android_widget.CheckBox = JavaCheckBox
+android_widget.Button = JavaButton
+android_widget.ScrollView = JavaScrollView
+android_widget.HorizontalScrollView = JavaHorizontalScrollView
+android_widget.ImageView = JavaImageView
+
+android_view.Gravity = JavaGravity
+android_view.View = JavaView
+android_view.ViewGroup = JavaViewGroup
+
+android_util.TypedValue = JavaTypedValue
+
+android_text.InputType = JavaInputType
+android_text.Spannable = JavaSpannableString
+android_text.SpannableString = JavaSpannableString
+android_text.Spanned = JavaSpanned
+android_text.TextWatcher = object
+android_text.Editable = JavaSpannableString
+
+android_text_style.ForegroundColorSpan = JavaForegroundColorSpan
+
+android_graphics.Typeface = JavaTypeface
+android_graphics.Paint = JavaPaint
+android_graphics.Canvas = JavaCanvas
+android_graphics.Bitmap = JavaBitmap
+android_graphics.BitmapFactory = JavaBitmapFactory
+android_graphics.drawable = android_graphics_drawable
+android_graphics_drawable.GradientDrawable = JavaGradientDrawable
+
+android_net.TrafficStats = JavaTrafficStats
+
+android_os.Process = JavaProcess
+android_os.Handler = JavaHandler
+android_os.Looper = JavaLooper
+
+android_media.MediaPlayer = JavaMediaPlayer
+
 sys.modules["java"] = JavaModule
 sys.modules["java.lang"] = type("lang", (), {"Runnable": object})
+sys.modules["android"] = android_mod
+sys.modules["android.widget"] = android_widget
+sys.modules["android.view"] = android_view
+sys.modules["android.util"] = android_util
+sys.modules["android.text"] = android_text
+sys.modules["android.text.style"] = android_text_style
+sys.modules["android.graphics"] = android_graphics
+sys.modules["android.graphics.drawable"] = android_graphics_drawable
+sys.modules["android.net"] = android_net
+sys.modules["android.os"] = android_os
+sys.modules["android.media"] = android_media
 
 
 # --- Margelet plugin object ---
@@ -555,17 +856,51 @@ class Margelet:
         send_ipc({"op": "log", "plugin": self.name, "text": text, "error": True})
 
     def ui(self, call, delay_ms=0):
-        call()
+        if delay_ms and delay_ms > 0:
+            def delayed():
+                time.sleep(float(delay_ms) / 1000.0)
+                try:
+                    call()
+                except Exception:
+                    self.error(traceback.format_exc())
+            threading.Thread(target=delayed, daemon=True).start()
+        else:
+            try:
+                call()
+            except Exception:
+                self.error(traceback.format_exc())
         return None
 
     def every(self, ms, call):
-        return None
+        interval = max(0.01, float(ms) / 1000.0)
+        stop_event = threading.Event()
+        def loop():
+            while not stop_event.is_set():
+                if stop_event.wait(interval):
+                    break
+                try:
+                    call()
+                except Exception:
+                    self.error(traceback.format_exc())
+        t = threading.Thread(target=loop, daemon=True)
+        t.start()
+        return stop_event
 
     def cancel(self, task=None):
         if task is None:
             self._cancel_send = True
             return False
+        if isinstance(task, threading.Event):
+            task.set()
+            return True
         return None
+
+    def dont_send(self):
+        self._cancel_send = True
+        return False
+
+    def get_last_fragment(self):
+        return _current_activity
 
     def toast(self, text):
         send_ipc({"op": "toast", "text": str(text)})
@@ -589,11 +924,13 @@ class Margelet:
             return val
         return str(val).lower() in ("1", "true", "yes", "on")
 
-    def background(self, call):
-        try:
-            call()
-        except Exception:
-            self.error(traceback.format_exc())
+    def background(self, call, *args, **kwargs):
+        def worker():
+            try:
+                call(*args, **kwargs)
+            except Exception:
+                self.error(traceback.format_exc())
+        threading.Thread(target=worker, daemon=True).start()
 
     def send(self, chat, text):
         send_ipc({"op": "send_msg", "chat": chat, "text": text})
@@ -753,6 +1090,17 @@ def run_plugin(plugin_id, name, folder, prefs=None):
         sys.stdout.flush()
         sys.stderr.flush()
         sys.stdout, sys.stderr = out, err
+
+
+class JavaMessage:
+    def __init__(self, msg_id, text, dialog_id, out):
+        self.id = msg_id
+        self.text = text
+        self.message = text
+        self.dialog_id = dialog_id
+        self.chat_id = dialog_id
+        self.out = out
+        self.is_outgoing = out
 
 
 def handle_input_change(field_id, text, old_text, cursor, char_w, line_h, pad_l, pad_t):
@@ -932,6 +1280,70 @@ def main():
                 _current_activity._root._width = w
                 _current_activity._root._height = h
 
+        elif cmd == "stop":
+            p_id = msg.get("id")
+            if p_id in _plugins:
+                del _plugins[p_id]
+            if p_id in _loaded:
+                del _loaded[p_id]
+
+        elif cmd == "message":
+            text = msg.get("text", "")
+            dialog_id = msg.get("dialog_id", 0)
+            msg_id = msg.get("msg_id", 0)
+            out = msg.get("out", False)
+            msg_obj = JavaMessage(msg_id, text, dialog_id, out)
+            for p in list(_plugins.values()):
+                for cb in list(p._on_message):
+                    try:
+                        import inspect
+                        sig = inspect.signature(cb)
+                        params = list(sig.parameters.values())
+                        if len(params) == 1:
+                            cb(msg_obj)
+                        elif len(params) == 2:
+                            cb(text, dialog_id)
+                        elif len(params) >= 3:
+                            cb(msg_id, text, dialog_id, out)
+                        else:
+                            cb()
+                    except Exception:
+                        p.error(traceback.format_exc())
+
+        elif cmd == "click_button":
+            p_id = msg.get("plugin")
+            where = msg.get("where", "chat")
+            title = msg.get("title", "")
+            p = _plugins.get(p_id)
+            if p:
+                key = str(where) + "\u0000" + str(title)
+                entry = p._buttons.get(key)
+                if entry:
+                    cb, _ = entry
+                    try:
+                        cb()
+                    except Exception:
+                        p.error(traceback.format_exc())
+
+        elif cmd == "send_photo":
+            path = msg.get("path", "")
+            caption = msg.get("caption", "")
+            dialog_id = msg.get("dialog_id", 0)
+            req_id = msg.get("req_id")
+            replacement_text = None
+            for p in list(_plugins.values()):
+                for cb in list(p._on_send_photo):
+                    try:
+                        res = cb(path, caption, dialog_id)
+                        if res is not None:
+                            replacement_text = res
+                            break
+                    except Exception:
+                        p.error(traceback.format_exc())
+                if replacement_text is not None:
+                    break
+            send_ipc({"op": "send_photo_res", "req_id": req_id, "text": replacement_text})
+
         elif cmd == "input_change":
             handle_input_change(
                 msg.get("field_id", "default"),
@@ -950,6 +1362,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-)py";
-
-} // namespace Margy::Plugins
+
+)py";
+
+} // namespace Margy::Plugins

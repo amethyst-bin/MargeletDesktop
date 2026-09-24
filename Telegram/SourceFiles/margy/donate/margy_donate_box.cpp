@@ -25,7 +25,7 @@ void DonateBox::Show(QWidget *parent) {
 }
 
 void DonateBox::prepare() {
-	setTitle(rpl::single(u"Поддержка Margy 💖"_q));
+	setTitle(rpl::single(u"Поддержка Margy"_q));
 	setDimensions(st::boxWideWidth, 480);
 
 	const auto content = setInnerWidget(
@@ -44,7 +44,7 @@ void DonateBox::prepare() {
 	const auto yooBtn = content->add(
 		object_ptr<::Ui::SettingsButton>(
 			content,
-			rpl::single(u"💳 ЮMoney: 4100118596660144"_q),
+			rpl::single(u"ЮMoney: 4100118596660144"_q),
 			st::settingsButton),
 		st::boxRowPadding);
 	yooBtn->setClickedCallback([=] {
@@ -56,7 +56,7 @@ void DonateBox::prepare() {
 	const auto robloxBtn = content->add(
 		object_ptr<::Ui::SettingsButton>(
 			content,
-			rpl::single(u"🎮 Roblox: @narezany"_q),
+			rpl::single(u"Roblox: @narezany"_q),
 			st::settingsButton),
 		st::boxRowPadding);
 	robloxBtn->setClickedCallback([=] {
@@ -67,7 +67,7 @@ void DonateBox::prepare() {
 	const auto tonBtn = content->add(
 		object_ptr<::Ui::SettingsButton>(
 			content,
-			rpl::single(u"💎 TON: UQ... (нажмите для копирования)"_q),
+			rpl::single(u"TON: UQ... (нажмите для копирования)"_q),
 			st::settingsButton),
 		st::boxRowPadding);
 	tonBtn->setClickedCallback([=] {

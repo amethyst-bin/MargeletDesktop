@@ -33,7 +33,7 @@ void WallBox::Show(QWidget *parent, int64_t peerId) {
 }
 
 void WallBox::prepare() {
-	setTitle(rpl::single(u"Стена Margy 📝"_q));
+	setTitle(rpl::single(u"Стена Margy"_q));
 	setDimensions(st::boxWideWidth, 480);
 
 	const auto content = setInnerWidget(
@@ -50,7 +50,7 @@ void WallBox::prepare() {
 	const auto postBtn = content->add(
 		object_ptr<::Ui::SettingsButton>(
 			content,
-			rpl::single(u"Опубликовать запись 🚀"_q),
+			rpl::single(u"Опубликовать запись"_q),
 			st::settingsButton),
 		st::boxRowPadding);
 	postBtn->setClickedCallback([=] {
@@ -86,7 +86,7 @@ void WallBox::loadPosts() {
 		_postsContainer->add(
 			object_ptr<::Ui::FlatLabel>(
 				_postsContainer,
-				u"🐾 Margy\nДобро пожаловать на Стену! Здесь можно делиться записями и памятными событиями."_q,
+				u"Margy\nДобро пожаловать на Стену! Здесь можно делиться записями и памятными событиями."_q,
 				st::boxLabel),
 			st::boxRowPadding);
 	} else {

@@ -273,9 +273,21 @@ void Host::processLine(const QString &line) {
 			: Core::App().activeWindow()
 			? Core::App().activeWindow()->sessionController()
 			: nullptr;
-		if (controller && chatId != 0) {
-			const auto peerId = PeerId(chatId);
-			if (const auto history = controller->session().data().history(peerId)) {
+		if (controller) {
+			auto peerId = PeerId(chatId);
+			if (chatId != 0 && !controller->session().data().historyLoaded(peerId)) {
+				if (chatId > 0) {
+					peerId = peerFromUser(UserId(chatId));
+				} else if (chatId < -1000000000000LL) {
+					peerId = peerFromChannel(ChannelId(-chatId - 1000000000000LL));
+				} else if (chatId < 0) {
+					peerId = peerFromChat(ChatId(-chatId));
+				}
+			}
+			const auto history = (chatId != 0)
+				? controller->session().data().history(peerId)
+				: (controller->activeChat() ? controller->session().data().history(controller->activeChat()->id) : nullptr);
+			if (history) {
 				auto message = Api::MessageToSend(Api::SendAction(history));
 				message.textWithTags = { text, {} };
 				controller->session().api().sendMessage(std::move(message));

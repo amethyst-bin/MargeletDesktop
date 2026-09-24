@@ -62,6 +62,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_forum.h"
 #include "data/data_forum_topic.h"
 #include "data/data_chat_filters.h"
+#include "margy/margy_config.h"
 #include "data/data_replies_list.h"
 #include "data/data_peer_values.h"
 #include "data/data_premium_limits.h"
@@ -2044,9 +2045,13 @@ void SessionController::checkOpenedFilter() {
 		const auto i = ranges::find(list, filterId, &Data::ChatFilter::id);
 		if (i == end(list)) {
 			setActiveChatsFilter(
-				0,
+				session().data().chatsFilters().defaultId(),
 				{ anim::type::normal, anim::activation::background });
 		}
+	} else if (Margy::Config::Instance().hideAllChatsTab() && session().data().chatsFilters().has()) {
+		setActiveChatsFilter(
+			session().data().chatsFilters().defaultId(),
+			{ anim::type::normal, anim::activation::background });
 	}
 }
 

@@ -167,6 +167,9 @@ public:
 	[[nodiscard]] rpl::producer<TagColorChanged> tagColorChanged() const;
 	[[nodiscard]] bool loaded() const;
 	[[nodiscard]] bool has() const;
+	void refresh() {
+		_listChanged.fire({});
+	}
 
 	[[nodiscard]] FilterId defaultId() const;
 	[[nodiscard]] FilterId lookupId(int index) const;
@@ -265,6 +268,7 @@ private:
 	base::flat_map<FilterId, MoreChatsData> _moreChatsData;
 	rpl::event_stream<FilterId> _moreChatsUpdated;
 	base::Timer _moreChatsTimer;
+	mutable std::vector<ChatFilter> _filteredList;
 
 };
 

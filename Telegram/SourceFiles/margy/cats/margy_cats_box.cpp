@@ -61,7 +61,7 @@ void CatsBox::Show(QWidget *parent) {
 }
 
 void CatsBox::prepare() {
-	setTitle(rpl::single(u"Коты Margy 🐾"_q));
+	setTitle(rpl::single(u"Коты Margy"_q));
 	setDimensions(st::boxWideWidth, 480);
 
 	const auto content = setInnerWidget(
@@ -92,7 +92,7 @@ void CatsBox::prepare() {
 		}
 	}, lifetime());
 
-	addButton(rpl::single(u"Ещё котик 🐱"_q), [=] {
+	addButton(rpl::single(u"Ещё котик"_q), [=] {
 		showCat(CatsManager::Instance().randomCat());
 	});
 

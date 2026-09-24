@@ -1,3 +1,94 @@
+diff --git a/ui/style/style_core_icon.cpp b/ui/style/style_core_icon.cpp
+index 0886094..04a5820 100644
+--- a/ui/style/style_core_icon.cpp
++++ b/ui/style/style_core_icon.cpp
+@@ -32,11 +32,23 @@ QMutex IconMasksMutex;
+ base::flat_map<std::pair<const IconMask*, uint32>, QPixmap> iconPixmaps;
+ base::flat_set<IconData*> iconData;
+ 
++IconMaskOverrideHook GlobalIconMaskOverrideHook = nullptr;
++
++void SetIconMaskOverrideHook(IconMaskOverrideHook hook) {
++	GlobalIconMaskOverrideHook = hook;
++}
++
+ [[nodiscard]] QImage CreateIconMask(
+ 		not_null<const IconMask*> mask,
+ 		int scale,
+ 		bool ignoreDpr = false) {
+ 	const auto ratio = ignoreDpr ? 1 : DevicePixelRatio();
++	if (GlobalIconMaskOverrideHook) {
++		auto custom = GlobalIconMaskOverrideHook(mask, scale, ratio);
++		if (!custom.isNull()) {
++			return custom;
++		}
++	}
+ 	const auto realscale = scale * ratio;
+ 
+ 	auto data = QByteArray::fromRawData(
+@@ -178,6 +190,8 @@ MonoIcon::MonoIcon(const IconMask *mask, Color color, QMargins padding)
+ 
+ void MonoIcon::reset() const {
+ 	_pixmap = QPixmap();
++	_maskImage = QImage();
++	_colorizedImage = QImage();
+ 	_size = QSize();
+ }
+ 
+@@ -510,6 +524,9 @@ void ResetIcons() {
+ 	for (const auto data : iconData) {
+ 		data->reset();
+ 	}
++
++	QMutexLocker lock(&IconMasksMutex);
++	IconMasks.clear();
+ }
+ 
+ void DestroyIcons() {
+diff --git a/ui/style/style_core_icon.h b/ui/style/style_core_icon.h
+index f02f227..76e5c8d 100644
+--- a/ui/style/style_core_icon.h
++++ b/ui/style/style_core_icon.h
+@@ -88,6 +88,10 @@ public:
+ 		int scale,
+ 		bool ignoreDpr) const;
+ 
++	[[nodiscard]] const IconMask *mask() const {
++		return _mask;
++	}
++
+ 	~MonoIcon() {
+ 	}
+ 
+@@ -126,6 +130,9 @@ public:
+ 	bool empty() const {
+ 		return _parts.empty();
+ 	}
++	[[nodiscard]] const std::vector<MonoIcon> &parts() const {
++		return _parts;
++	}
+ 
+ 	void paint(QPainter &p, const QPoint &pos, int outerw) const {
+ 		for (const auto &part : _parts) {
+@@ -225,6 +232,9 @@ public:
+ 	bool empty() const {
+ 		return _data->empty();
+ 	}
++	[[nodiscard]] const IconMask *mask() const {
++		return (_data && !_data->empty() && !_data->parts().empty()) ? _data->parts()[0].mask() : nullptr;
++	}
+ 	void reset() const {
+ 		if (_data) {
+ 			_data->reset();
+@@ -392,5 +402,8 @@ private:
+ void ResetIcons();
+ void DestroyIcons();
+ 
++using IconMaskOverrideHook = QImage (*)(const IconMask *mask, int scale, int ratio);
++void SetIconMaskOverrideHook(IconMaskOverrideHook hook);
++
+ } // namespace internal
+ } // namespace style
 diff --git a/ui/text/text_entity.cpp b/ui/text/text_entity.cpp
 index aa9c1b3..029346d 100644
 --- a/ui/text/text_entity.cpp

@@ -120,6 +120,13 @@ void Config::setEmojiFont(const QString &font) {
 	}
 }
 
+void Config::setIconPack(IconPack pack) {
+	if (_iconPack != pack) {
+		_iconPack = pack;
+		save();
+	}
+}
+
 void Config::setProfileGradient(const QString &gradient) {
 	if (_profileGradient != gradient) {
 		_profileGradient = gradient;
@@ -240,6 +247,7 @@ void Config::load() {
 	_freeEmoji = settings.value("general/free_emoji", true).toBool();
 	_pluginsEnabled = settings.value("plugins/enabled", true).toBool();
 	_pluginHooksEnabled = settings.value("plugins/hooks_enabled", true).toBool();
+	_iconPack = static_cast<IconPack>(settings.value("appearance/icon_pack", 0).toInt());
 }
 
 void Config::save() {
@@ -256,6 +264,7 @@ void Config::save() {
 	settings.setValue("appearance/bubbles_outline", _bubblesOutline);
 	settings.setValue("appearance/custom_font", _customFont);
 	settings.setValue("appearance/emoji_font", _emojiFont);
+	settings.setValue("appearance/icon_pack", static_cast<int>(_iconPack));
 	settings.setValue("profile/gradient", _profileGradient);
 	settings.setValue("profile/gradient_enabled", _profileGradientEnabled);
 	settings.setValue("profile/unhide_gifts", _unhideGifts);

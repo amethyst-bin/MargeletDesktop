@@ -1618,7 +1618,8 @@ void SetupWindowTitleContent(
 			container,
 			std::move(label),
 			checked,
-			st::settingsCheckbox);
+			st::settingsCheckbox,
+			st::defaultToggle);
 	};
 	const auto addCheckbox = [&](
 			rpl::producer<QString> &&label,
@@ -1701,7 +1702,8 @@ void SetupSystemIntegrationContent(
 			container,
 			std::move(label),
 			checked,
-			st::settingsCheckbox);
+			st::settingsCheckbox,
+			st::defaultToggle);
 	};
 	const auto addCheckbox = [&](
 			rpl::producer<QString> &&label,

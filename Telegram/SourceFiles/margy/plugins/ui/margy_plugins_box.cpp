@@ -37,7 +37,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 	const auto installBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
 			box.get(),
-			rpl::single(u"➕ Установить из файла (.marp, .mtp, .zip)"_q),
+			rpl::single(u"Установить из файла (.marp, .mtp, .zip)"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	installBtn->setClickedCallback([=] {
@@ -63,7 +63,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 	const auto consoleBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
 			box.get(),
-			rpl::single(u"📋 Консоль плагинов"_q),
+			rpl::single(u"Консоль плагинов"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	consoleBtn->setClickedCallback([=] {
@@ -73,7 +73,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 	const auto openLogBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
 			box.get(),
-			rpl::single(u"📄 Открыть файл логов (plugins_log.txt)"_q),
+			rpl::single(u"Открыть файл логов (plugins_log.txt)"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	openLogBtn->setClickedCallback([=] {
@@ -87,7 +87,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 	const auto restartBtn = box->addRow(
 		object_ptr<::Ui::SettingsButton>(
 			box.get(),
-			rpl::single(u"🔄 Перезапустить плагины"_q),
+			rpl::single(u"Перезапустить плагины"_q),
 			st::settingsButton),
 		st::settingsSendTypePadding);
 	restartBtn->setClickedCallback([=] {
@@ -124,7 +124,7 @@ void InitPluginsBox(not_null<::Ui::GenericBox*> box) {
 			// Header row: Checkbox with name & version
 			const auto title = p.displayName()
 				+ u" (v"_q + p.version + u")"_q
-				+ (p.usesHooks ? u" ⚡ [Хуки]"_q : QString());
+				+ (p.usesHooks ? u" [Хуки]"_q : QString());
 
 			const auto isChecked = Manager::Instance().isEnabled(p.id);
 			const auto checkbox = row->add(
