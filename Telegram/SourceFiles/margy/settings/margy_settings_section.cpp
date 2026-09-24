@@ -18,7 +18,7 @@
 #include "settings/settings_common.h"
 #include "chat_helpers/emoji_sets_manager.h"
 #include "boxes/abstract_box.h"
-#include "ui/boxes/generic_box.h"
+#include "ui/layers/generic_box.h"
 
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
