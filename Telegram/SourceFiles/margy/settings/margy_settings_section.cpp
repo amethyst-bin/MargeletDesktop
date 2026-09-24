@@ -19,6 +19,10 @@
 #include "chat_helpers/emoji_sets_manager.h"
 #include "boxes/abstract_box.h"
 #include "ui/layers/generic_box.h"
+#include "lang/lang_keys.h"
+#include "main/main_session.h"
+#include "data/data_session.h"
+#include "data/data_chat_filters.h"
 
 #include "ui/vertical_list.h"
 #include "ui/wrap/vertical_layout.h"
@@ -124,9 +128,12 @@ void MargySettingsSection::setupContent() {
 		}
 	};
 
+	const auto packText = lifetime().make_state<rpl::variable<QString>>(
+		u"Икон-пак: "_q + packName(IconPacks::Instance().currentPack()));
+
 	const auto iconPackBtn = ::Settings::AddButtonWithIcon(
 		content,
-		rpl::single(u"Икон-пак: "_q + packName(IconPacks::Instance().currentPack())),
+		packText->value(),
 		st::settingsButton,
 		{ &st::menuIconPalette, ::Settings::IconType::Rounded, nullptr, QBrush(QColor(0x8B, 0x5C, 0xF6)) });
 	iconPackBtn->setClickedCallback([=] {
@@ -157,7 +164,7 @@ void MargySettingsSection::setupContent() {
 			box->addButton(tr::lng_box_ok(), [=] {
 				const auto chosen = static_cast<IconPack>(group->current());
 				IconPacks::Instance().setPack(chosen);
-				iconPackBtn->setText(u"Икон-пак: "_q + packName(chosen));
+				*packText = u"Икон-пак: "_q + packName(chosen);
 				box->closeBox();
 			});
 			box->addButton(tr::lng_cancel(), [=] {
