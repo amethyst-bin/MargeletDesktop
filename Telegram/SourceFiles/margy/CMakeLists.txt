@@ -74,5 +74,4 @@ target_sources(Telegram PRIVATE
 
 target_include_directories(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${qt_loc}/include/QtNetwork
 )
