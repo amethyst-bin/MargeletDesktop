@@ -2,15 +2,11 @@ diff --git a/ui/style/style_core_icon.cpp b/ui/style/style_core_icon.cpp
 index 0886094..04a5820 100644
 --- a/ui/style/style_core_icon.cpp
 +++ b/ui/style/style_core_icon.cpp
-@@ -32,11 +32,23 @@ QMutex IconMasksMutex;
+@@ -32,11 +32,19 @@ QMutex IconMasksMutex;
  base::flat_map<std::pair<const IconMask*, uint32>, QPixmap> iconPixmaps;
  base::flat_set<IconData*> iconData;
  
 +IconMaskOverrideHook GlobalIconMaskOverrideHook = nullptr;
-+
-+void SetIconMaskOverrideHook(IconMaskOverrideHook hook) {
-+	GlobalIconMaskOverrideHook = hook;
-+}
 +
  [[nodiscard]] QImage CreateIconMask(
  		not_null<const IconMask*> mask,
@@ -26,6 +22,17 @@ index 0886094..04a5820 100644
  	const auto realscale = scale * ratio;
  
  	auto data = QByteArray::fromRawData(
+@@ -160,6 +168,10 @@ QSize IconData::size(int scale) const {
+ 	return QSize();
+ }
+ 
+ } // namespace
++
++void SetIconMaskOverrideHook(IconMaskOverrideHook hook) {
++	GlobalIconMaskOverrideHook = hook;
++}
+ 
+ MonoIcon::MonoIcon(const MonoIcon &other, const style::palette &palette)
 @@ -178,6 +190,8 @@ MonoIcon::MonoIcon(const IconMask *mask, Color color, QMargins padding)
  
  void MonoIcon::reset() const {
