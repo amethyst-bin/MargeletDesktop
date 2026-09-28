@@ -30,6 +30,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/qthelp_regex.h"
 #include "ui/ui_utility.h"
 #include "ui/effects/animations.h"
+#include "margy/shell/margy_shell_theme.h"
 
 #ifdef Q_OS_MAC
 #include "platform/mac/global_menu_mac.h"
@@ -416,7 +417,9 @@ void Sandbox::socketConnected() {
 			+ EscapeTo7bit(url.toString(QUrl::FullyEncoded))
 			+ ';';
 	}
-	if (cQuit()) {
+	if (Margy::ShellTheme::HasShellColorCommand()) {
+		commands += Margy::ShellTheme::IpcCommandString() + ';';
+	} else if (cQuit()) {
 		commands += u"CMD:quit;"_q;
 	} else if (cRefStartUrls().isEmpty()) {
 		commands += u"CMD:show;"_q;
@@ -847,6 +850,9 @@ uint64 Sandbox::execExternal(const QString &cmd) {
 		}
 	} else if (cmd == "quit") {
 		Quit();
+	} else if (cmd.startsWith("shell_theme ")) {
+		Margy::ShellTheme::HandleIpcCommand(cmd.mid(12));
+		return 0;
 	}
 	return 0;
 }

@@ -76,11 +76,11 @@ jobs:
             -u $(id -u):$(id -g) \
             -v "$PWD:/usr/src/tdesktop" \
             -v "${CCACHE_DIR:-$HOME/.cache/ccache}:/var/cache/ccache" \
-            -e CONFIG=Debug \
+            -e CONFIG=Release \
             ${{ env.IMAGE_TAG }} \
             env -u CCACHE_DISABLE /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
             $API \
-            -D CMAKE_CONFIGURATION_TYPES=Debug \
+            -D CMAKE_CONFIGURATION_TYPES=Release \
             -D CMAKE_COMPILE_WARNING_AS_ERROR=OFF \
             -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
             -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
@@ -89,7 +89,7 @@ jobs:
         if: env.ONLY_CACHE == 'false'
         run: |
           found=0
-          for f in out/Debug/Telegram out/Debug/MareletDesktop out/Debug/MargeletDesktop out/Release/Telegram out/Release/MareletDesktop out/Release/MargeletDesktop; do
+          for f in out/Release/Telegram out/Release/MareletDesktop out/Release/MargeletDesktop out/Debug/Telegram out/Debug/MareletDesktop out/Debug/MargeletDesktop; do
             if [ -f "$f" ]; then
               echo "Found executable: $f"
               ls -lh "$f"
@@ -105,7 +105,7 @@ jobs:
         if: (env.UPLOAD_ARTIFACT == 'true') || (github.ref == 'refs/heads/nightly')
         run: |
           mkdir -p artifact
-          for dir in out/Debug out/Release; do
+          for dir in out/Release out/Debug; do
             for bin in MareletDesktop MargeletDesktop Telegram Updater; do
               if [ -f "$dir/$bin" ]; then
                 echo "Copying $dir/$bin to artifact/"
@@ -113,7 +113,9 @@ jobs:
               fi
             done
           done
-          ls -la artifact/
+          echo "Stripping debug symbols from binaries..."
+          strip --strip-unneeded artifact/* 2>/dev/null || true
+          ls -lh artifact/
 
       - name: Upload artifact.
         uses: actions/upload-artifact@v4

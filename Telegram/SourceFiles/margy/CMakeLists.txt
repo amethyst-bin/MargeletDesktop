@@ -70,6 +70,8 @@ target_sources(Telegram PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/icons/margy_icon_packs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/markup/margy_markup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/markup/margy_markup.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/shell/margy_shell_theme.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/shell/margy_shell_theme.cpp
 )
 
 target_include_directories(Telegram PRIVATE

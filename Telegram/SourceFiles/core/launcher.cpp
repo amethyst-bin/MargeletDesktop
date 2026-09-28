@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/version.h"
 #include "base/concurrent_timer.h"
 #include "base/options.h"
+#include "margy/shell/margy_shell_theme.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QStandardPaths>
@@ -606,6 +607,12 @@ void Launcher::processArguments() {
 		{ "-workdir"        , KeyFormat::OneValue },
 		{ "--"              , KeyFormat::AllLeftValues },
 		{ "-scale"          , KeyFormat::OneValue },
+		{ "-shell-color"    , KeyFormat::NoValues },
+		{ "--shell-color"   , KeyFormat::NoValues },
+		{ "-color"          , KeyFormat::OneValue },
+		{ "--color"         , KeyFormat::OneValue },
+		{ "-amoled"         , KeyFormat::NoValues },
+		{ "--amoled"        , KeyFormat::NoValues },
 	};
 	auto parseResult = QMap<QByteArray, QStringList>();
 	auto parsingKey = QByteArray();
@@ -669,6 +676,18 @@ void Launcher::processArguments() {
 		gConfigScale = ((value < kScaleMin) || (value > kScaleMax))
 			? kScaleAuto
 			: value;
+	}
+
+	const auto shellColor = parseResult.contains("-shell-color")
+		|| parseResult.contains("--shell-color");
+	const auto amoled = parseResult.contains("-amoled")
+		|| parseResult.contains("--amoled");
+	const auto colorList = parseResult.contains("--color")
+		? parseResult.value("--color")
+		: parseResult.value("-color");
+	const auto colorHex = colorList.isEmpty() ? QString() : colorList.front();
+	if (shellColor || !colorHex.isEmpty() || amoled) {
+		Margy::ShellTheme::SetCommandLineArgs(true, colorHex, amoled);
 	}
 }
 
