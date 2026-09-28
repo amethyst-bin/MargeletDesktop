@@ -78,6 +78,7 @@ Submodule modifications (such as `Telegram/lib_ui`) are tracked via `.patch` fil
   - `--warn-uninitialized`
   - `-Werror=dev`
 - **Never reference uninitialized variables in `CMakeLists.txt`** (e.g., using `${qt_loc}` when `qt_loc` is not set will immediately abort CMake configuration with `-Werror=dev`).
+- **Disable `libheif` (`-D CMAKE_DISABLE_FIND_PACKAGE_libheif=TRUE`)**: In `centos_env:latest`, the bundled `libheif.a` has broken transitive references to FFmpeg/VAAPI/OpenH264 that break `codegen_emoji`. Disabling `libheif` cleanly omits `heif.cpp` without affecting client functionality.
 
 ### Release vs Debug Builds & Binary Size
 - **Docker Container Compatibility (`CONFIG=Debug`)**: The CentOS container image bundles prebuilt toolchain dependencies configured for Debug. Building with `CONFIG=Release` causes missing transitive static library errors (e.g. vaapi/vdpau/opus symbols) when linking codegen executables.
