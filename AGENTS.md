@@ -80,8 +80,8 @@ Submodule modifications (such as `Telegram/lib_ui`) are tracked via `.patch` fil
 - **Never reference uninitialized variables in `CMakeLists.txt`** (e.g., using `${qt_loc}` when `qt_loc` is not set will immediately abort CMake configuration with `-Werror=dev`).
 
 ### Release vs Debug Builds & Binary Size
-- **Debug builds (`CONFIG=Debug`)**: Executable is ~1.8 GB due to massive unstripped DWARF debug symbols.
-- **Release builds (`CONFIG=Release`)**: Highly optimized (`-O3`), and running `strip --strip-unneeded artifact/*` brings the final standalone binary down to **~45–60 MB**.
+- **Docker Container Compatibility (`CONFIG=Debug`)**: The CentOS container image bundles prebuilt toolchain dependencies configured for Debug. Building with `CONFIG=Release` causes missing transitive static library errors (e.g. vaapi/vdpau/opus symbols) when linking codegen executables.
+- **Binary Size & Symbol Stripping**: Unstripped debug builds are ~1.8 GB due to heavy DWARF symbols. Running `strip --strip-unneeded artifact/*` strips all debugging sections and leaves a clean, production-ready standalone binary of **~45–60 MB**.
 
 ### GitHub Actions Workflows (`.github/workflows/`)
 - `linux.yml`: Linux x64 build inside Docker, uses ccache, validates generated binary, strips symbols, and uploads `MareletDesktop-Linux-x64` artifact.
